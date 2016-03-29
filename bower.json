@@ -17,7 +17,8 @@
     "tests"
   ],
   "dependencies": {
-    "three.js": "^0.75.0",
-    "gsap": "^1.18.2"
+    "three.js": "threejs#*",
+    "gsap": "^1.18.2",
+    "lodash": "^4.6.1"
   }
 }
