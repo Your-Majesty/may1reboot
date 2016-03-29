@@ -1,0 +1,46 @@
+{
+  "name": "may1reboot",
+  "version": "1.0.0",
+  "description": "may1reboot globe header module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Your-Majesty/may1reboot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Your-Majesty/ym-game/issues"
+  },
+  "homepage": "https://github.com/Your-Majesty/may1reboot#readme",
+  "devDependencies": {
+    "bower": "^1.6.3",
+    "cssnext": "^1.8.4",
+    "del": "^2.0.2",
+    "express": "^4.13.3",
+    "gulp": "^3.9.0",
+    "gulp-changed": "^1.3.0",
+    "gulp-clean-css": "^2.0.3",
+    "gulp-htmlmin": "^1.3.0",
+    "gulp-if": "^2.0.0",
+    "gulp-plumber": "^1.0.1",
+    "gulp-postcss": "^6.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-shell": "^0.5.0",
+    "gulp-template": "^3.1.0",
+    "gulp-uglify": "^1.5.3",
+    "main-bower-files": "^2.9.0",
+    "morgan": "^1.6.1",
+    "precss": "^1.2.3",
+    "run-sequence": "^1.1.4",
+    "surge": "^0.16.0"
+  },
+  "dependencies": {
+    "gulp-include": "^2.0.3",
+    "gulp-sass": "^2.1.0",
+    "gulp-watch": "^4.3.5"
+  }
+}

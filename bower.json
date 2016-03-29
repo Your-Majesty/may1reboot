@@ -1,0 +1,23 @@
+{
+  "name": "may1reboot",
+  "homepage": "https://github.com/Your-Majesty/may1reboot",
+  "authors": [
+    "Szenia Zadvornykh <s.zadvornykh@gmail.com>"
+  ],
+  "description": "may1reboot globe header module",
+  "main": "main.js",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "three.js": "^0.75.0",
+    "gsap": "^1.18.2"
+  }
+}
