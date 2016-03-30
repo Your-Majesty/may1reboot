@@ -38,23 +38,45 @@ function MarkerAnimationSystem(prefabGeometry, originHeight, endPositions) {
   var endPosition;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    startPosition.y = originHeight * 0.5;
-
-    controlPosition0.x = THREE.Math.randFloatSpread(12.0);
-    controlPosition0.y = originHeight * THREE.Math.randFloat(0.2, 0.5);
-    controlPosition0.z = THREE.Math.randFloatSpread(12.0);
-
-    controlPosition1.x = THREE.Math.randFloatSpread(12.0);
-    controlPosition1.y = originHeight * THREE.Math.randFloat(0.2, 0.5);
-    controlPosition1.z = THREE.Math.randFloatSpread(12.0);
+    //startPosition.y = originHeight * 0.5;
+    //
+    //controlPosition0.x = THREE.Math.randFloatSpread(12.0);
+    //controlPosition0.y = originHeight * THREE.Math.randFloat(0.2, 0.5);
+    //controlPosition0.z = THREE.Math.randFloatSpread(12.0);
+    //
+    //controlPosition1.x = THREE.Math.randFloatSpread(12.0);
+    //controlPosition1.y = originHeight * THREE.Math.randFloat(0.2, 0.5);
+    //controlPosition1.z = THREE.Math.randFloatSpread(12.0);
+    //
+    //endPosition = endPositions[i];
+    //
+    //if (endPosition.y < 0) {
+    //  startPosition.y *= -1;
+    //  controlPosition0.y *= -1;
+    //  controlPosition1.y *= -1;
+    //}
 
     endPosition = endPositions[i];
 
-    if (endPosition.y < 0) {
-      startPosition.y *= -1;
-      controlPosition0.y *= -1;
-      controlPosition1.y *= -1;
-    }
+    controlPosition0.copy(endPosition).multiplyScalar(6.0);
+
+    var angleXZ = Math.atan2(controlPosition0.z, controlPosition0.x);
+    var length = controlPosition0.length();
+
+    angleXZ -= Math.PI * 0.25;
+    var x = Math.cos(angleXZ);
+    var z = Math.sin(angleXZ);
+
+    controlPosition0.x = x * length * 0.5 + THREE.Math.randFloatSpread(4.0);
+    controlPosition0.y = THREE.Math.randFloatSpread(24.0);
+    controlPosition0.z = z * length * 0.5 + THREE.Math.randFloatSpread(4.0);
+
+    controlPosition1.x = x * length * 0.5 + THREE.Math.randFloatSpread(4.0);
+    controlPosition1.y = THREE.Math.randFloatSpread(24.0);
+    controlPosition1.z = z * length * 0.5 + THREE.Math.randFloatSpread(4.0);
+
+    startPosition.copy(endPosition).multiplyScalar(12.0);
+    startPosition.y = 0;
 
     for (j = 0; j < prefabVertexCount; j++) {
       aStartPosition.array[offset  ] = startPosition.x;
@@ -85,7 +107,7 @@ function MarkerAnimationSystem(prefabGeometry, originHeight, endPositions) {
     },
     shaderFunctions: [
       THREE.BAS.ShaderChunk['cubic_bezier'],
-      THREE.BAS.ShaderChunk['ease_in_cubic']
+      THREE.BAS.ShaderChunk['ease_out_cubic']
     ],
     shaderParameters: [
       'uniform float uTime;',

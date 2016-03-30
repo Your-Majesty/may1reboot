@@ -9,13 +9,15 @@ var config = {
 
 var Globe = function() {
   this.root = new THREERoot();
-  //this.root.renderer.setClearColor(0x040404);
+  this.root.renderer.setClearColor(0x0f0f0f);
   this.root.renderer.setPixelRatio(window.devicePixelRatio || 1);
   this.root.camera.position.set(0, 0, 60);
 
   this.root.controls.enableKeys = false;
   this.root.controls.enableZoom = false;
   this.root.controls.enableDamping = true;
+  this.root.controls.autoRotate = true;
+  this.root.controls.autoRotateSpeed = -0.125;
   this.root.controls.dampingFactor = 0.20;
   this.root.controls.rotateSpeed = 0.5;
 
@@ -29,7 +31,7 @@ var Globe = function() {
   var cameraAnimation = this.initCameraAnimation(duration);
   var controls = this.root.controls;
 
-  var tl = new TimelineMax();
+  var tl = new TimelineMax({repeat:0});
 
   tl.call(function() {
     controls.enabled = false;
@@ -93,7 +95,7 @@ Globe.prototype = {
     var proxy = {
       angle:Math.PI * 1.5,
       distance:100,
-      height:10
+      height:20
     };
     var camera = this.root.camera;
     var center = new THREE.Vector3();
@@ -109,7 +111,7 @@ Globe.prototype = {
       }
     });
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:30, height:0, ease:Power1.easeInOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:30, height:0, ease:Power1.easeOut});
 
     return tl;
   }
