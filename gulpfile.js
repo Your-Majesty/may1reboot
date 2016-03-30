@@ -139,4 +139,11 @@ gulp.task('serve', ['build'], function() {
   console.log('Listening on port %d', port);
 });
 
+gulp.task('serve-live', ['build'], shell.task([
+  'live-server'
+]));
+
+gulp.task('live', ['serve-live', 'watch']);
+
 gulp.task('default', ['serve', 'watch']);
+
