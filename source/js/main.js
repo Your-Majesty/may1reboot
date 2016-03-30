@@ -21,43 +21,76 @@ var Globe = function() {
   this.root.controls.dampingFactor = 0.20;
   this.root.controls.rotateSpeed = 0.5;
 
-  this.processMarkerPositions();
+  var loader = new THREE.TextureLoader();
 
-  this.initEarth();
-  this.initStars();
+  loader.load('res/tex/earth_dark.jpg', _.bind(function(texture) {
 
-  var duration = 12;
-  var markerAnimation = this.initMarkersAnimation(duration);
-  var cameraAnimation = this.initCameraAnimation(duration);
-  var controls = this.root.controls;
+    this.processMarkerPositions(texture.image);
 
-  var tl = new TimelineMax({repeat:0});
+    this.initEarth(texture);
+    this.initStars();
 
-  tl.call(function() {
-    controls.enabled = false;
-  });
-  tl.add(markerAnimation, 0);
-  tl.add(cameraAnimation, 0);
-  tl.call(function() {
-    controls.enabled = true;
-  });
+    var duration = 12;
+    var markerAnimation = this.initMarkersAnimation(duration);
+    var cameraAnimation = this.initCameraAnimation(duration);
+    var controls = this.root.controls;
+
+    var tl = new TimelineMax({repeat:0});
+
+    tl.call(function() {
+      controls.enabled = false;
+    });
+    tl.add(markerAnimation, 0);
+    tl.add(cameraAnimation, 0);
+    tl.call(function() {
+      controls.enabled = true;
+    });
+
+  }, this));
 };
 Globe.prototype = {
-  processMarkerPositions:function() {
+  processMarkerPositions:function(img) {
     this.markerPositions = [];
 
-    for (var i = 0; i < 5000; i++) {
-      var lat = Math.random() * 360;
-      var long = Math.random() * 360;
+    var cnv = document.createElement('canvas');
+    var ctx = cnv.getContext('2d');
 
-      this.markerPositions[i] = utils.llToVec(lat, long, config.earthRadius);
+    cnv.width = img.width * 0.5;
+    cnv.height = img.height * 0.5;
+
+    ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
+
+    var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
+    var threshold = 127;
+
+    var positions = [];
+
+    for (var i = 0; i < data.length; i+=4) {
+      var r = data[i];
+
+      if (r > threshold) {
+        var x = (i / 4) % cnv.width;
+        var y = ((i / 4) / cnv.width) | 0;
+
+        positions.push({x:x / cnv.width, y:y / cnv.height});
+      }
+    }
+
+    console.log('position count', positions.length);
+
+    for (var j = 0; j < positions.length; j++) {
+      var p = positions[j];
+      var lat = THREE.Math.mapLinear(p.y, 0, 1, 90, -90);
+      var lon = THREE.Math.mapLinear(p.x, 0, 1, -180, 180);
+
+      this.markerPositions[j] = utils.llToVec(lat, lon, config.earthRadius);
     }
   },
 
-  initEarth:function() {
+  initEarth:function(texture) {
     var geo = new THREE.SphereGeometry(config.earthRadius, 32, 32);
     var mat = new THREE.MeshBasicMaterial({
-      map: THREE.ImageUtils.loadTexture('res/tex/earth_dark.jpg')
+      map: texture
     });
     var mesh = new THREE.Mesh(geo, mat);
     this.root.scene.add(mesh);
