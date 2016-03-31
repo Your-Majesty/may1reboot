@@ -12,17 +12,17 @@ var Globe = function() {
   this.root.renderer.setClearColor(0x0f0f0f);
   this.root.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
-  //this.root.camera.position.z = 100;
+  //this.root.camera.position.y = 160;
+  this.root.controls.enableZoom = false;
+  this.root.controls.autoRotate = true;
 
   this.root.controls.enableKeys = false;
-  this.root.controls.enableZoom = false;
   this.root.controls.enableDamping = true;
-  this.root.controls.autoRotate = true;
   this.root.controls.autoRotateSpeed = -0.125;
   this.root.controls.dampingFactor = 0.20;
   this.root.controls.rotateSpeed = 0.5;
 
-  var light = new THREE.DirectionalLight(0xffffff, 1.0);
+  var light = this.cameraLight = new THREE.DirectionalLight(0xffffff, 1.5);
   this.root.scene.add(this.root.camera);
   this.root.camera.add(light);
 
@@ -67,6 +67,10 @@ Globe.prototype = {
       }
     }
 
+    positions.sort(function(a, b) {
+      return a.x < b.x;
+    });
+
     console.log('position count', positions.length);
 
     for (var j = 0; j < positions.length; j++) {
@@ -103,24 +107,21 @@ Globe.prototype = {
   },
 
   createIntroAnimation:function() {
-    var duration = 8;
     var controls = this.root.controls;
 
-    var tl = new TimelineMax({repeat:0});
+    var tl = new TimelineMax({repeat:-1});
 
-    tl.call(function() {
-      controls.enabled = false;
-    });
-    tl.to(this.root.renderer.domElement, 2, {opacity:1});
-    tl.add(this.createMarkersAnimation(duration), 0);
-    tl.add(this.createCameraAnimation(duration), 0);
-    tl.call(function() {
-      controls.enabled = true;
-    });
+    tl.call(function() {controls.enabled = false;});
+    tl.to(this.root.renderer.domElement, 0.25, {opacity:1}, 0);
+
+    tl.add(this.createCameraAnimation(10), 0.0);
+    tl.add(this.createMarkersAnimation(10), 0.0);
+
+    tl.call(function() {controls.enabled = true;});
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.0375, 12, 12);
+    var prefabGeometry = new THREE.SphereGeometry(0.0375, 8, 8);
     var markerSystem = new MarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var animation = TweenMax.fromTo(markerSystem, duration,
       {animationProgress:0},
@@ -136,7 +137,7 @@ Globe.prototype = {
     var proxy = {
       angle:Math.PI * 1.5,
       distance:100,
-      height:20
+      height:60
     };
     var camera = this.root.camera;
     var center = new THREE.Vector3();

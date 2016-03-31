@@ -25,5 +25,9 @@ var utils = {
     v.set(x, y, z);
 
     return v;
+  },
+  // uses TweenMax
+  ease:function(ease, t, b, c, d) {
+    return b + ease.getRatio(t / d) * c;
   }
 };

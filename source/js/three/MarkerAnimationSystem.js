@@ -9,15 +9,15 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
   var aAnimation = bufferGeometry.createAttribute('aAnimation', 2);
   var delay, duration;
 
-  var minDelay = 0, maxDelay = 4;
-  var minDuration = 2, maxDuration = 4;
-  var stretch = 0.25;
+  var minDelay = 0, maxDelay = 2.0;
+  var minDuration = 0.125, maxDuration = 1.0;
+  var stretch = 0.05;
 
   this.animationDuration = maxDelay + maxDuration + stretch;
   this._animationProgress = 0;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    delay = THREE.Math.randFloat(minDelay, maxDelay);
+    delay = utils.ease(Circ.easeOut, i, minDelay, maxDelay, prefabCount);
     duration = THREE.Math.randFloat(minDuration, maxDuration);
 
     for (j = 0; j < prefabVertexCount; j++) {
@@ -41,26 +41,28 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
 
     endPosition = endPositions[i];
 
-    var scale = THREE.Math.randFloat(6.0, 8.0);
+    var scale = THREE.Math.randFloat(6.0, 12.0);
 
     startPosition.copy(endPosition).multiplyScalar(scale);
-    startPosition.y = THREE.Math.randFloatSpread(24.0);
+    //startPosition.y = THREE.Math.randFloatSpread(24.0);
 
     controlPosition0.copy(endPosition).multiplyScalar(scale * 0.5);
 
     var angleXZ = Math.atan2(controlPosition0.z, controlPosition0.x);
     var length = controlPosition0.length();
 
-    angleXZ -= Math.PI * 0.5;
+    angleXZ -= Math.PI * 0.25;
 
     var x = Math.cos(angleXZ);
     var z = Math.sin(angleXZ);
 
-    controlPosition0.x = x * length * 0.5 + THREE.Math.randFloatSpread(8.0);
-    controlPosition0.z = z * length * 0.5 + THREE.Math.randFloatSpread(8.0);
+    var scale0 = THREE.Math.randFloat(1.0, 2.0);
+    controlPosition0.x = x * length * scale0;
+    controlPosition0.z = z * length * scale0;
 
-    controlPosition1.x = x * length * 0.5 + THREE.Math.randFloatSpread(8.0);
-    controlPosition1.z = z * length * 0.5 + THREE.Math.randFloatSpread(8.0);
+    var scale1 = THREE.Math.randFloat(0.25, 0.50);
+    controlPosition1.x = x * length * scale1;
+    controlPosition1.z = z * length * scale1;
 
     for (j = 0; j < prefabVertexCount; j++) {
       aStartPosition.array[offset  ] = startPosition.x;
@@ -142,13 +144,13 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
 
       'transformed += cubicBezier(aStartPosition, aControl0, aControl1, aEndPosition, tProgress);',
 
-      'float clr = min(1.0, tProgress + 0.75);',
+      'float clr = min(1.0, tProgress + 0.25);',
       'vColor.xyz = mix(aStartColor.rgb, color.rgb, clr);'
     ]
   },
   {
-    shininess:400,
-    specular:0x580806
+    shininess:80,
+    specular:0xaa0400
     //diffuse: 0xd50c05
   });
 
