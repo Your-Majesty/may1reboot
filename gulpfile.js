@@ -140,7 +140,7 @@ gulp.task('serve', ['build'], function() {
 });
 
 gulp.task('serve-live', ['build'], shell.task([
-  'live-server'
+  'cd build; live-server'
 ]));
 
 gulp.task('live', ['serve-live', 'watch']);

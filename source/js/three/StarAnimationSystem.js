@@ -1,4 +1,4 @@
-function StarAnimationSystem(prefabGeometry, prefabCount, spread) {
+function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
   var prefabVertexCount = prefabGeometry.vertices.length;
   var bufferGeometry = new THREE.BAS.PrefabBufferGeometry(prefabGeometry, prefabCount);
 
@@ -9,9 +9,7 @@ function StarAnimationSystem(prefabGeometry, prefabCount, spread) {
   var position = new THREE.Vector3();
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    position.x = THREE.Math.randFloatSpread(spread);
-    position.y = THREE.Math.randFloatSpread(spread);
-    position.z = THREE.Math.randFloatSpread(spread);
+    utils.randomSpherical(clear, spread, position);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aPosition.array[offset  ] = position.x;
@@ -76,5 +74,5 @@ StarAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
 StarAnimationSystem.prototype.constructor = StarAnimationSystem;
 
 StarAnimationSystem.prototype.update = function() {
-  this.material.uniforms['uTime'].value += (1/60);
+  this.material.uniforms['uTime'].value += (1/30);
 };
