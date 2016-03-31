@@ -12,6 +12,8 @@ var Globe = function() {
   this.root.renderer.setClearColor(0x0f0f0f);
   this.root.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
+  //this.root.camera.position.z = 100;
+
   this.root.controls.enableKeys = false;
   this.root.controls.enableZoom = false;
   this.root.controls.enableDamping = true;
@@ -19,6 +21,10 @@ var Globe = function() {
   this.root.controls.autoRotateSpeed = -0.125;
   this.root.controls.dampingFactor = 0.20;
   this.root.controls.rotateSpeed = 0.5;
+
+  var light = new THREE.DirectionalLight(0xffffff, 1.0);
+  this.root.scene.add(this.root.camera);
+  this.root.camera.add(light);
 
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
@@ -46,7 +52,7 @@ Globe.prototype = {
     ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
 
     var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
-    var threshold = 127;
+    var threshold = 167;
 
     var positions = [];
 
@@ -74,8 +80,12 @@ Globe.prototype = {
 
   initEarth:function(texture) {
     var geo = new THREE.SphereGeometry(config.earthRadius, 32, 32);
-    var mat = new THREE.MeshBasicMaterial({
-      map: texture
+    var mat = new THREE.MeshPhongMaterial({
+      map: texture,
+      specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
+      bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
+      bumpScale: 0.25,
+      shininess:4
     });
     var mesh = new THREE.Mesh(geo, mat);
     this.root.scene.add(mesh);
@@ -90,16 +100,10 @@ Globe.prototype = {
     });
 
     this.root.scene.add(starSystem);
-
-    var light = new THREE.PointLight();
-
-    this.root.scene.add(light);
   },
 
   createIntroAnimation:function() {
     var duration = 8;
-    var markerAnimation = this.createMarkersAnimation(duration);
-    var cameraAnimation = this.createCameraAnimation(duration);
     var controls = this.root.controls;
 
     var tl = new TimelineMax({repeat:0});
@@ -108,15 +112,15 @@ Globe.prototype = {
       controls.enabled = false;
     });
     tl.to(this.root.renderer.domElement, 2, {opacity:1});
-    tl.add(markerAnimation, 0);
-    tl.add(cameraAnimation, 0);
+    tl.add(this.createMarkersAnimation(duration), 0);
+    tl.add(this.createCameraAnimation(duration), 0);
     tl.call(function() {
       controls.enabled = true;
     });
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.0375, 4, 4);
+    var prefabGeometry = new THREE.SphereGeometry(0.0375, 12, 12);
     var markerSystem = new MarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var animation = TweenMax.fromTo(markerSystem, duration,
       {animationProgress:0},
@@ -148,7 +152,7 @@ Globe.prototype = {
       }
     });
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:30, height:0, ease:Power1.easeInOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:24, height:0, ease:Power1.easeInOut});
 
     return tl;
   }

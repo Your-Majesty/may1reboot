@@ -11,7 +11,7 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
 
   var minDelay = 0, maxDelay = 4;
   var minDuration = 2, maxDuration = 4;
-  var stretch = 0.1;
+  var stretch = 0.25;
 
   this.animationDuration = maxDelay + maxDuration + stretch;
   this._animationProgress = 0;
@@ -41,25 +41,26 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
 
     endPosition = endPositions[i];
 
-    controlPosition0.copy(endPosition).multiplyScalar(6.0);
+    var scale = THREE.Math.randFloat(6.0, 8.0);
+
+    startPosition.copy(endPosition).multiplyScalar(scale);
+    startPosition.y = THREE.Math.randFloatSpread(24.0);
+
+    controlPosition0.copy(endPosition).multiplyScalar(scale * 0.5);
 
     var angleXZ = Math.atan2(controlPosition0.z, controlPosition0.x);
     var length = controlPosition0.length();
 
     angleXZ -= Math.PI * 0.5;
+
     var x = Math.cos(angleXZ);
     var z = Math.sin(angleXZ);
 
-    controlPosition0.x = x * length * 0.5 + THREE.Math.randFloatSpread(4.0);
-    //controlPosition0.y = THREE.Math.randFloatSpread(24.0);
-    controlPosition0.z = z * length * 0.5 + THREE.Math.randFloatSpread(4.0);
+    controlPosition0.x = x * length * 0.5 + THREE.Math.randFloatSpread(8.0);
+    controlPosition0.z = z * length * 0.5 + THREE.Math.randFloatSpread(8.0);
 
-    controlPosition1.x = x * length * 0.5 + THREE.Math.randFloatSpread(4.0);
-    //controlPosition1.y = THREE.Math.randFloatSpread(24.0);
-    controlPosition1.z = z * length * 0.5 + THREE.Math.randFloatSpread(4.0);
-
-    startPosition.copy(endPosition).multiplyScalar(12.0);
-    startPosition.y = THREE.Math.randFloatSpread(12.0);
+    controlPosition1.x = x * length * 0.5 + THREE.Math.randFloatSpread(8.0);
+    controlPosition1.z = z * length * 0.5 + THREE.Math.randFloatSpread(8.0);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aStartPosition.array[offset  ] = startPosition.x;
@@ -82,7 +83,32 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
     }
   }
 
-  var material = new THREE.BAS.BasicAnimationMaterial({
+  // colors
+  var aStartColor = bufferGeometry.createAttribute('aStartColor', 3);
+  var color = bufferGeometry.createAttribute('color', 3); // end color
+
+  var startColor = new THREE.Color();
+  var endColor = new THREE.Color();
+
+  startColor.set(0x000000);
+  endColor.set(0xd50c05);
+
+  for (i = 0, offset = 0; i < prefabCount; i++) {
+
+    for (j = 0; j < prefabVertexCount; j++) {
+      aStartColor.array[offset  ] = startColor.r;
+      aStartColor.array[offset+1] = startColor.g;
+      aStartColor.array[offset+2] = startColor.b;
+
+      color.array[offset  ] = endColor.r;
+      color.array[offset+1] = endColor.g;
+      color.array[offset+2] = endColor.b;
+
+      offset += 3;
+    }
+  }
+
+  var material = new THREE.BAS.PhongAnimationMaterial({
     shading: THREE.FlatShading,
     vertexColors: THREE.VertexColors,
     uniforms: {
@@ -98,7 +124,10 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
       'attribute vec3 aStartPosition;',
       'attribute vec3 aControl0;',
       'attribute vec3 aControl1;',
-      'attribute vec3 aEndPosition;'
+      'attribute vec3 aEndPosition;',
+
+      'attribute vec3 aStartColor;'
+      // color (endColor) defined is by THREE
     ],
     shaderVertexInit: [
       'float tDelay = aAnimation.x;',
@@ -108,12 +137,19 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
       //'float tProgress = tTime / tDuration;'
     ],
     shaderTransformPosition: [
+      //'float scl = 1.0 + (1.0 - tProgress) * 2.0;',
+      //'transformed *= scl;',
+
       'transformed += cubicBezier(aStartPosition, aControl0, aControl1, aEndPosition, tProgress);',
-      'vColor *= (tProgress + 0.5);'
+
+      'float clr = min(1.0, tProgress + 0.75);',
+      'vColor.xyz = mix(aStartColor.rgb, color.rgb, clr);'
     ]
   },
   {
-    diffuse: 0xd50c05
+    shininess:400,
+    specular:0x580806
+    //diffuse: 0xd50c05
   });
 
   THREE.Mesh.call(this, bufferGeometry, material);
