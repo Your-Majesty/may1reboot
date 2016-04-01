@@ -10,7 +10,7 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
   var delay, duration;
 
   var minDelay = 0, maxDelay = 2.0;
-  var minDuration = 0.125, maxDuration = 1.0;
+  var minDuration = 0.25, maxDuration = 1.0;
   var stretch = 0.05;
 
   this.animationDuration = maxDelay + maxDuration + stretch;
@@ -139,8 +139,7 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
       //'float tProgress = tTime / tDuration;'
     ],
     shaderTransformPosition: [
-      //'float scl = 1.0 + (1.0 - tProgress) * 2.0;',
-      //'transformed *= scl;',
+      'transformed *= tProgress;',
 
       'transformed += cubicBezier(aStartPosition, aControl0, aControl1, aEndPosition, tProgress);',
 

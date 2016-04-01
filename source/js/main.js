@@ -10,7 +10,6 @@ var config = {
 var Globe = function() {
   this.root = new THREERoot();
   this.root.renderer.setClearColor(0x0f0f0f);
-  this.root.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
   //this.root.camera.position.y = 160;
   this.root.controls.enableZoom = false;
@@ -22,7 +21,7 @@ var Globe = function() {
   this.root.controls.dampingFactor = 0.20;
   this.root.controls.rotateSpeed = 0.5;
 
-  var light = this.cameraLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  var light = new THREE.DirectionalLight(0xffffff, 1.0);
   this.root.scene.add(this.root.camera);
   this.root.camera.add(light);
 
@@ -121,7 +120,7 @@ Globe.prototype = {
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.0375, 8, 8);
+    var prefabGeometry = new THREE.SphereGeometry(0.0375, 4, 4);
     var markerSystem = new MarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var animation = TweenMax.fromTo(markerSystem, duration,
       {animationProgress:0},

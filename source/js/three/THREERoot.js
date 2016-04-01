@@ -9,6 +9,7 @@ function THREERoot(params) {
   }, params);
 
   this.renderer = new THREE.WebGLRenderer();
+  this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   document.getElementById(params.containerId).appendChild(this.renderer.domElement);
 
   this.camera = new THREE.PerspectiveCamera(
