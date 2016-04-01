@@ -109,7 +109,7 @@ Globe.prototype = {
   createIntroAnimation:function() {
     var controls = this.root.controls;
 
-    var tl = new TimelineMax({repeat:-1});
+    var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {controls.enabled = false;});
     tl.to(this.root.renderer.domElement, 0.25, {opacity:1}, 0);
