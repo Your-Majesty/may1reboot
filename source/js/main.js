@@ -9,7 +9,7 @@ var config = {
 
 var Globe = function() {
   this.root = new THREERoot();
-  this.root.renderer.setClearColor(0x0f0f0f);
+  this.root.renderer.setClearColor(0x080808);
 
   //this.root.camera.position.y = 160;
   this.root.controls.enableZoom = false;
@@ -25,6 +25,8 @@ var Globe = function() {
   this.root.scene.add(this.root.camera);
   this.root.camera.add(light);
 
+  this.initPostProcessing();
+
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
   var loader = new THREE.TextureLoader();
@@ -39,6 +41,20 @@ var Globe = function() {
   }, this));
 };
 Globe.prototype = {
+  initPostProcessing:function() {
+    var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
+    var bloomPass = new THREE.BloomPass(1.0, 25, 4.0, 512);
+    //var copyPass = new THREE.ShaderPass(THREE.CopyShader);
+    var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
+
+    this.root.initPostProcessing([
+      renderPass,
+      bloomPass,
+      //copyPass
+      vignettePass
+    ])
+  },
+
   processMarkerPositions:function(img) {
     this.markerPositions = [];
 
@@ -83,12 +99,14 @@ Globe.prototype = {
 
   initEarth:function(texture) {
     var geo = new THREE.SphereGeometry(config.earthRadius, 32, 32);
+    //var geo = new THREE.TetrahedronGeometry(config.earthRadius, 3);
     var mat = new THREE.MeshPhongMaterial({
       map: texture,
+      shading: THREE.FlatShading,
       specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
       bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
-      bumpScale: 0.25,
-      shininess:4
+      bumpScale: 0.5,
+      shininess: 20
     });
     var mesh = new THREE.Mesh(geo, mat);
     this.root.scene.add(mesh);

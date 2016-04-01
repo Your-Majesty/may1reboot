@@ -51,5 +51,23 @@ THREERoot.prototype = {
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+  },
+
+  // post processing
+  initPostProcessing:function(passes) {
+    this.composer = new THREE.EffectComposer(this.renderer);
+
+    for (var i = 0; i < passes.length; i++) {
+      var pass = passes[i];
+      pass.renderToScreen = (i === passes.length - 1);
+
+      this.composer.addPass(pass);
+    }
+
+    this.renderer.autoClear = false;
+    this.render = _.bind(function() {
+      this.renderer.clear();
+      this.composer.render();
+    }, this);
   }
 };
