@@ -10,6 +10,8 @@ var config = {
 var Globe = function() {
   this.root = new THREERoot();
   this.root.renderer.setClearColor(0x080808);
+  //this.root.renderer.gammaInput = true;
+  //this.root.renderer.gammaOutput = true;
 
   //this.root.camera.position.y = 160;
   this.root.controls.enableZoom = false;
@@ -17,15 +19,19 @@ var Globe = function() {
 
   this.root.controls.enableKeys = false;
   this.root.controls.enableDamping = true;
-  this.root.controls.autoRotateSpeed = -0.125;
-  this.root.controls.dampingFactor = 0.20;
-  this.root.controls.rotateSpeed = 0.5;
+  this.root.controls.autoRotateSpeed = -0.06;
+  this.root.controls.dampingFactor = 0.025;
+  this.root.controls.rotateSpeed = 0.125;
+  this.root.controls.minPolarAngle = Math.PI * 0.25;
+  this.root.controls.maxPolarAngle = Math.PI * 0.75;
 
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
   this.root.scene.add(this.root.camera);
   this.root.camera.add(light);
 
   this.initPostProcessing();
+
+  this.root.onUpdate = _.bind(this.update, this);
 
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
@@ -39,20 +45,48 @@ var Globe = function() {
     this.createIntroAnimation();
 
   }, this));
+
+  console.warn = function() {};
 };
 Globe.prototype = {
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
     var bloomPass = new THREE.BloomPass(1.0, 25, 4.0, 512);
-    //var copyPass = new THREE.ShaderPass(THREE.CopyShader);
+    var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
+    var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
+    var copyPass = new THREE.ShaderPass(THREE.CopyShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
+
+    hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
+    vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
+
+    this.hBlurPass = hBlurPass;
+    this.vBlurPass = vBlurPass;
 
     this.root.initPostProcessing([
       renderPass,
-      bloomPass,
+      //bloomPass,
+      vBlurPass,
+      hBlurPass,
       //copyPass
       vignettePass
     ])
+  },
+
+  update:function() {
+    if (this.lastCamPos) {
+      var delta = new THREE.Vector3();
+
+      delta.subVectors(this.root.camera.position, this.lastCamPos);
+
+      var lx = delta.x;
+      var ly = delta.y;
+
+      this.hBlurPass.uniforms.strength.value = lx;
+      this.vBlurPass.uniforms.strength.value = ly;
+    }
+
+    this.lastCamPos = this.root.camera.position.clone();
   },
 
   processMarkerPositions:function(img) {
@@ -102,18 +136,19 @@ Globe.prototype = {
     //var geo = new THREE.TetrahedronGeometry(config.earthRadius, 3);
     var mat = new THREE.MeshPhongMaterial({
       map: texture,
-      shading: THREE.FlatShading,
+      //shading: THREE.FlatShading,
       specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
       bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
       bumpScale: 0.5,
-      shininess: 20
+      shininess: 1,
+      specular:0x111111
     });
     var mesh = new THREE.Mesh(geo, mat);
     this.root.scene.add(mesh);
   },
 
   initStars:function() {
-    var prefabGeometry = new THREE.TetrahedronGeometry(0.5);
+    var prefabGeometry = new THREE.TetrahedronGeometry(0.75);
     var starSystem = new StarAnimationSystem(prefabGeometry, 2000, 100, 1000);
 
     TweenMax.ticker.addEventListener('tick', function() {
@@ -125,16 +160,28 @@ Globe.prototype = {
 
   createIntroAnimation:function() {
     var controls = this.root.controls;
+    var hBlurPass = this.hBlurPass;
+    var vBlurPass = this.vBlurPass;
 
     var tl = new TimelineMax({repeat:0});
 
-    tl.call(function() {controls.enabled = false;});
+    tl.call(function() {
+      controls.enabled = false;
+      hBlurPass.enabled = false;
+      vBlurPass.enabled = false;
+    });
     tl.to(this.root.renderer.domElement, 0.25, {opacity:1}, 0);
 
     tl.add(this.createCameraAnimation(10), 0.0);
     tl.add(this.createMarkersAnimation(10), 0.0);
 
-    tl.call(function() {controls.enabled = true;});
+    tl.call(function() {
+      controls.enabled = true;
+      hBlurPass.enabled = true;
+      vBlurPass.enabled = true;
+    });
+
+    //tl.timeScale(10);
   },
 
   createMarkersAnimation:function(duration) {
@@ -170,7 +217,7 @@ Globe.prototype = {
       }
     });
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:24, height:0, ease:Power1.easeInOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, height:0, ease:Power1.easeInOut});
 
     return tl;
   }

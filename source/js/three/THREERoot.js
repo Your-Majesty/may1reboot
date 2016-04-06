@@ -42,7 +42,9 @@ THREERoot.prototype = {
   },
   update: function() {
     this.controls && this.controls.update();
+    this.onUpdate();
   },
+  onUpdate:function(){},
   render: function() {
     this.renderer.render(this.scene, this.camera);
   },
