@@ -19,15 +19,19 @@ var Globe = function() {
 
   this.root.controls.enableKeys = false;
   this.root.controls.enableDamping = true;
-  this.root.controls.autoRotateSpeed = -0.06;
+  this.root.controls.autoRotateSpeed = -0.03;
   this.root.controls.dampingFactor = 0.1;
   this.root.controls.rotateSpeed = 0.125;
   this.root.controls.minPolarAngle = Math.PI * 0.25;
   this.root.controls.maxPolarAngle = Math.PI * 0.75;
 
-  var light = new THREE.DirectionalLight(0xffffff, 1.0);
   this.root.scene.add(this.root.camera);
-  this.root.camera.add(light);
+
+  var light = new THREE.DirectionalLight(0xffffff, 1.0);
+  light.position.set(0, 0.4, 1);
+  this.root.scene.add(light);
+
+  //this.root.camera.add(light);
 
   this.initPostProcessing();
 
@@ -67,7 +71,7 @@ Globe.prototype = {
     this.vBlurPass = vBlurPass;
 
     blendPass.uniforms['tDiffuse2'].value = savePass.renderTarget;
-    blendPass.uniforms['mixRatio'].value = 0.75;
+    blendPass.uniforms['mixRatio'].value = 0.5;
     blendPass.uniforms['opacity'].value = 1.00;
 
     this.root.initPostProcessing([
@@ -148,11 +152,14 @@ Globe.prototype = {
       specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
       bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
       bumpScale: 0.5,
-      shininess: 1,
-      specular:0x222222
+      shininess: 8,
+      specular:0x111111
     });
     var mesh = new THREE.Mesh(geo, mat);
+    this.earth = mesh;
     this.root.scene.add(mesh);
+
+    TweenMax.to(mesh.rotation, 24, {y:Math.PI * -2, ease:Power0.easeIn, repeat:-1});
   },
 
   initStars:function() {
@@ -200,7 +207,7 @@ Globe.prototype = {
       {animationProgress:1, ease:Power0.easeIn}
     );
 
-    this.root.scene.add(markerSystem);
+    this.earth.add(markerSystem);
 
     return animation;
   },
