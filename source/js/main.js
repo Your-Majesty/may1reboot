@@ -20,7 +20,7 @@ var Globe = function() {
   this.root.controls.enableKeys = false;
   this.root.controls.enableDamping = true;
   this.root.controls.autoRotateSpeed = -0.06;
-  this.root.controls.dampingFactor = 0.025;
+  this.root.controls.dampingFactor = 0.1;
   this.root.controls.rotateSpeed = 0.125;
   this.root.controls.minPolarAngle = Math.PI * 0.25;
   this.root.controls.maxPolarAngle = Math.PI * 0.75;
@@ -51,11 +51,14 @@ var Globe = function() {
 Globe.prototype = {
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
-    var bloomPass = new THREE.BloomPass(1.0, 25, 4.0, 512);
+    var bloomPass = new THREE.BloomPass(1.25, 25, 4.0, 512);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
     var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
     var copyPass = new THREE.ShaderPass(THREE.CopyShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
+
+    var blendPass = new THREE.ShaderPass(THREE.BlendShader, 'tDiffuse1');
+    var savePass = new THREE.SavePass(new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight));
 
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
     vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
@@ -63,14 +66,19 @@ Globe.prototype = {
     this.hBlurPass = hBlurPass;
     this.vBlurPass = vBlurPass;
 
+    blendPass.uniforms['tDiffuse2'].value = savePass.renderTarget;
+    blendPass.uniforms['mixRatio'].value = 0.5;
+    blendPass.uniforms['opacity'].value = 1.00;
+
     this.root.initPostProcessing([
       renderPass,
-      //bloomPass,
-      vBlurPass,
+      bloomPass,
       hBlurPass,
-      //copyPass
+      vBlurPass,
+      blendPass,
+      savePass,
       vignettePass
-    ])
+    ]);
   },
 
   update:function() {
@@ -141,7 +149,7 @@ Globe.prototype = {
       bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
       bumpScale: 0.5,
       shininess: 1,
-      specular:0x111111
+      specular:0x222222
     });
     var mesh = new THREE.Mesh(geo, mat);
     this.root.scene.add(mesh);
