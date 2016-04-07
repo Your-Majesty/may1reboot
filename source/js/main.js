@@ -67,7 +67,7 @@ Globe.prototype = {
     this.vBlurPass = vBlurPass;
 
     blendPass.uniforms['tDiffuse2'].value = savePass.renderTarget;
-    blendPass.uniforms['mixRatio'].value = 0.5;
+    blendPass.uniforms['mixRatio'].value = 0.75;
     blendPass.uniforms['opacity'].value = 1.00;
 
     this.root.initPostProcessing([
@@ -87,8 +87,8 @@ Globe.prototype = {
 
       delta.subVectors(this.root.camera.position, this.lastCamPos);
 
-      var lx = delta.x;
-      var ly = delta.y;
+      var lx = delta.x * 0.25;
+      var ly = delta.y * 0.25;
 
       this.hBlurPass.uniforms.strength.value = lx;
       this.vBlurPass.uniforms.strength.value = ly;
