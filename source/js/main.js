@@ -4,36 +4,21 @@
 //=require three/*.js
 
 var config = {
-  earthRadius:10
+  earthRadius:8
 };
 
 var Globe = function() {
   this.root = new THREERoot({
     createCameraControls:false,
-    fov:40
+    fov:20
   });
   this.root.renderer.setClearColor(0x080808);
 
   this.root.camera.position.y = 160;
 
-  //this.root.controls.enableZoom = false;
-  //this.root.controls.autoRotate = true;
-  //
-  //this.root.controls.enableKeys = false;
-  //this.root.controls.enableDamping = true;
-  //this.root.controls.autoRotateSpeed = -0.03;
-  //this.root.controls.dampingFactor = 0.1;
-  //this.root.controls.rotateSpeed = 0.125;
-  //this.root.controls.minPolarAngle = Math.PI * 0.25;
-  //this.root.controls.maxPolarAngle = Math.PI * 0.75;
-
-  //this.root.scene.add(this.root.camera);
-
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
-  light.position.set(0, 0.4, 1);
+  light.position.set(-2.0, 4.0, 1).normalize();
   this.root.scene.add(light);
-
-  //this.root.camera.add(light);
 
   this.initPostProcessing();
 
@@ -68,6 +53,8 @@ Globe.prototype = {
 
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
     vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
+    hBlurPass.uniforms.strength.value = 1.0;
+    vBlurPass.uniforms.strength.value = 1.0;
 
     this.hBlurPass = hBlurPass;
     this.vBlurPass = vBlurPass;
@@ -79,8 +66,8 @@ Globe.prototype = {
     this.root.initPostProcessing([
       renderPass,
       bloomPass,
-      hBlurPass,
-      vBlurPass,
+      //hBlurPass,
+      //vBlurPass,
       blendPass,
       savePass,
       vignettePass
@@ -88,19 +75,19 @@ Globe.prototype = {
   },
 
   update:function() {
-    if (this.lastCamPos) {
-      var delta = new THREE.Vector3();
-
-      delta.subVectors(this.root.camera.position, this.lastCamPos);
-
-      var lx = delta.x * 0.25;
-      var ly = delta.y * 0.25;
-
-      this.hBlurPass.uniforms.strength.value = lx;
-      this.vBlurPass.uniforms.strength.value = ly;
-    }
-
-    this.lastCamPos = this.root.camera.position.clone();
+    //if (this.lastCamPos) {
+    //  var delta = new THREE.Vector3();
+    //
+    //  delta.subVectors(this.root.camera.position, this.lastCamPos);
+    //
+    //  var lx = delta.x * 0.25;
+    //  var ly = delta.y * 0.25;
+    //
+    //  this.hBlurPass.uniforms.strength.value = lx;
+    //  this.vBlurPass.uniforms.strength.value = ly;
+    //}
+    //
+    //this.lastCamPos = this.root.camera.position.clone();
   },
 
   processMarkerPositions:function(img) {
@@ -147,10 +134,8 @@ Globe.prototype = {
 
   initEarth:function(texture) {
     var geo = new THREE.SphereGeometry(config.earthRadius, 32, 32);
-    //var geo = new THREE.TetrahedronGeometry(config.earthRadius, 3);
     var mat = new THREE.MeshPhongMaterial({
       map: texture,
-      //shading: THREE.FlatShading,
       specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
       bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
       bumpScale: 0.5,
@@ -159,12 +144,14 @@ Globe.prototype = {
     });
     var mesh = new THREE.Mesh(geo, mat);
 
-    mesh.position.y = -5;
-
     this.earth = mesh;
     this.root.scene.add(mesh);
 
-    var rotator = new ObjectRotator(mesh);
+    var earthRotationController = new ObjectRotator(mesh);
+
+    TweenMax.ticker.addEventListener('tick', function() {
+      earthRotationController.update();
+    });
 
     //var halo = new THREE.Mesh(
     //  new THREE.SphereGeometry(config.earthRadius + 0.5, 64, 64),
@@ -215,7 +202,7 @@ Globe.prototype = {
       vBlurPass.enabled = true;
     });
 
-    tl.timeScale(10);
+    tl.timeScale(2);
   },
 
   createMarkersAnimation:function(duration) {
@@ -233,17 +220,18 @@ Globe.prototype = {
 
   createCameraAnimation:function(duration) {
     var proxy = {
-      angle:Math.PI * 1.5,
-      distance:100,
-      height:60
+      angle:Math.PI * 1.25,
+      distance:400,
+      eyeHeight:60
     };
+    var eyeHeight = 8;
     var camera = this.root.camera;
-    var target = new THREE.Vector3();
+    var target = new THREE.Vector3(0, eyeHeight, 0);
 
     var tl = new TimelineMax({
       onUpdate:function() {
         var x = Math.cos(proxy.angle) * proxy.distance;
-        var y = proxy.height;
+        var y = proxy.eyeHeight;
         var z = Math.sin(proxy.angle) * proxy.distance;
 
         camera.position.set(x, y, z);
@@ -251,7 +239,7 @@ Globe.prototype = {
       }
     });
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:20, height:0, ease:Power1.easeInOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, eyeHeight:eyeHeight, ease:Power1.easeOut});
 
     return tl;
   }

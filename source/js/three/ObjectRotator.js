@@ -1,45 +1,45 @@
 function ObjectRotator(object, element) {
   element = element || window;
 
-  this.object = object;
-
   var isDragging = false;
-  var lastPosition = new THREE.Vector2();
+
+  var center = new THREE.Vector2(window.innerWidth * 0.5, window.innerHeight * 0.5);
+
+  var position = new THREE.Vector2();
+  var startPosition = new THREE.Vector2();
+  var targetRotation = new THREE.Vector2();
+  var startRotation = new THREE.Vector2();
   var delta = new THREE.Vector2();
-  var quaternion = new THREE.Quaternion();
-  var euler = new THREE.Euler();
+
+  var dragSpeed = 0.01;
+  var damping = 0.05;
+  var vMin = -Math.PI * 0.5;
+  var vMax = 0.25;
 
   element.addEventListener('mousedown', function(e) {
     isDragging = true;
 
-    lastPosition.x = e.clientX;
-    lastPosition.y = e.clientY;
+    startPosition.set(e.clientX, e.clientY).sub(center);
+    startRotation.copy(targetRotation);
   });
   element.addEventListener('mouseup', function(e) {
     isDragging = false;
   });
   element.addEventListener('mousemove', function(e) {
-
     if (!isDragging) return;
 
-    delta.x = e.clientX - lastPosition.x;
-    delta.y = e.clientY - lastPosition.y;
+    position.set(e.clientX, e.clientY).sub(center);
 
-    lastPosition.x = e.clientX;
-    lastPosition.y = e.clientY;
-
-    euler.set(
-      THREE.Math.degToRad(delta.y),
-      THREE.Math.degToRad(delta.x),
-      0
-    );
-    quaternion.setFromEuler(euler);
-
-    object.quaternion.multiplyQuaternions(quaternion, object.quaternion);
+    delta.subVectors(position, startPosition);
+    targetRotation.copy(startRotation);
+    targetRotation.addScaledVector(delta, dragSpeed);
   });
-}
-ObjectRotator.prototype = {
-  update:function() {
 
+  this.update = function() {
+    object.rotation.y += (targetRotation.x - object.rotation.y) * damping;
+    object.rotation.x += (targetRotation.y - object.rotation.x) * damping;
+
+    object.rotation.x = THREE.Math.clamp(object.rotation.x, vMin, vMax);
+    targetRotation.y = THREE.Math.clamp(targetRotation.y, vMin, vMax);
   }
-};
+}
