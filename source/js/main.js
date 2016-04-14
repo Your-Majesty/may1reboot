@@ -12,7 +12,7 @@ var Globe = function() {
     createCameraControls:false,
     fov:20
   });
-  this.root.renderer.setClearColor(0x080808);
+  this.root.renderer.setClearColor(0x101010);
 
   this.root.camera.position.y = 160;
 
@@ -42,7 +42,7 @@ var Globe = function() {
 Globe.prototype = {
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
-    var bloomPass = new THREE.BloomPass(1.25, 25, 4.0, 512);
+    var bloomPass = new THREE.BloomPass(2, 25, 4.0, 512);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
     var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
     var copyPass = new THREE.ShaderPass(THREE.CopyShader);
@@ -56,8 +56,13 @@ Globe.prototype = {
     hBlurPass.uniforms.strength.value = 1.0;
     vBlurPass.uniforms.strength.value = 1.0;
 
+    vignettePass.uniforms.offset.value = 1.0;
+    vignettePass.uniforms.darkness.value = 1.25;
+    vignettePass.uniforms.centerOffset.value.y = 0.3;
+
     this.hBlurPass = hBlurPass;
     this.vBlurPass = vBlurPass;
+    this.vignettePass = vignettePass;
 
     blendPass.uniforms['tDiffuse2'].value = savePass.renderTarget;
     blendPass.uniforms['mixRatio'].value = 0.5;
@@ -102,7 +107,7 @@ Globe.prototype = {
     ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
 
     var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
-    var threshold = 200;
+    var threshold = 240;
 
     var positions = [];
 
@@ -133,16 +138,23 @@ Globe.prototype = {
   },
 
   initEarth:function(texture) {
-    var geo = new THREE.SphereGeometry(config.earthRadius, 128, 128);
+    var geo = new THREE.SphereGeometry(config.earthRadius, 100, 100);
     var mat = new THREE.MeshPhongMaterial({
-      map: texture,
-      specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
-      displacementMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
+      map: new THREE.Texture(),
+      color:0x000000,
+
+      emissive:0x070707,
+
+      displacementMap: THREE.ImageUtils.loadTexture('res/tex/earth_disp.jpg'),
       displacementScale: 0.5,
-      bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
-      bumpScale: 0.5,
-      shininess: 8,
-      specular:0x222222
+      displacementBias: -0.1,
+
+      bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.png'),
+      bumpScale: 0.05,
+
+      specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
+      specular:0x222222,
+      shininess: 8
     });
     var mesh = new THREE.Mesh(geo, mat);
 
@@ -155,24 +167,24 @@ Globe.prototype = {
       earthRotationController.update();
     });
 
-    //var halo = new THREE.Mesh(
-    //  new THREE.SphereGeometry(config.earthRadius + 0.5, 64, 64),
-    //  new THREE.MeshPhongMaterial({
-    //    transparent:true,
-    //    opacity:0.05,
-    //    color:0xffffff,
-    //    //side:THREE.BackSide
-    //  })
-    //);
-    //
-    //mesh.add(halo);
+    var halo = new THREE.Mesh(
+      new THREE.SphereGeometry(config.earthRadius + 0.75, 64, 64),
+      new AtmosphereMaterial({
+        alphaMap:'res/tex/earth_cld_alpha.jpg',
+        color:0xAFD2E4,
+        power:4.0,
+        coefficient:0.8
+      })
+    );
 
-    //TweenMax.to(mesh.rotation, 24, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+    mesh.add(halo);
+
+    TweenMax.to(halo.rotation, 24, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
   },
 
   initStars:function() {
     var prefabGeometry = new THREE.TetrahedronGeometry(0.75);
-    var starSystem = new StarAnimationSystem(prefabGeometry, 2000, 100, 1000);
+    var starSystem = new StarAnimationSystem(prefabGeometry, 8000, 100, 2000);
 
     TweenMax.ticker.addEventListener('tick', function() {
       starSystem.update();
@@ -185,6 +197,7 @@ Globe.prototype = {
     var controls = this.root.controls;
     var hBlurPass = this.hBlurPass;
     var vBlurPass = this.vBlurPass;
+    var vignettePass = this.vignettePass;
 
     var tl = new TimelineMax({repeat:0});
 
@@ -197,6 +210,7 @@ Globe.prototype = {
 
     tl.add(this.createCameraAnimation(10), 0.0);
     tl.add(this.createMarkersAnimation(10), 0.0);
+    tl.fromTo(vignettePass.uniforms.offset, 10, {value:0}, {value:1.0}, 0);
 
     tl.call(function() {
       //controls.enabled = true;

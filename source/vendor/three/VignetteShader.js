@@ -12,7 +12,8 @@ THREE.VignetteShader = {
 
 		"tDiffuse": { type: "t", value: null },
 		"offset":   { type: "f", value: 1.0 },
-		"darkness": { type: "f", value: 1.0 }
+		"darkness": { type: "f", value: 1.0 },
+		"centerOffset": { type: "v2", value: new THREE.Vector2() }
 
 	},
 
@@ -33,6 +34,7 @@ THREE.VignetteShader = {
 
 		"uniform float offset;",
 		"uniform float darkness;",
+		"uniform vec2 centerOffset;",
 
 		"uniform sampler2D tDiffuse;",
 
@@ -40,21 +42,9 @@ THREE.VignetteShader = {
 
 		"void main() {",
 
-			// Eskil's vignette
-
 			"vec4 texel = texture2D( tDiffuse, vUv );",
-			"vec2 uv = ( vUv - vec2( 0.5 ) ) * vec2( offset );",
+			"vec2 uv = ( vUv - vec2( 0.5 ) ) * vec2( offset ) + centerOffset;",
 			"gl_FragColor = vec4( mix( texel.rgb, vec3( 1.0 - darkness ), dot( uv, uv ) ), texel.a );",
-
-			/*
-			// alternative version from glfx.js
-			// this one makes more "dusty" look (as opposed to "burned")
-
-			"vec4 color = texture2D( tDiffuse, vUv );",
-			"float dist = distance( vUv, vec2( 0.5 ) );",
-			"color.rgb *= smoothstep( 0.8, offset * 0.799, dist *( darkness + offset ) );",
-			"gl_FragColor = color;",
-			*/
 
 		"}"
 
