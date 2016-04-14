@@ -8,24 +8,26 @@ var config = {
 };
 
 var Globe = function() {
-  this.root = new THREERoot();
+  this.root = new THREERoot({
+    createCameraControls:false,
+    fov:40
+  });
   this.root.renderer.setClearColor(0x080808);
-  //this.root.renderer.gammaInput = true;
-  //this.root.renderer.gammaOutput = true;
 
-  //this.root.camera.position.y = 160;
-  this.root.controls.enableZoom = false;
-  this.root.controls.autoRotate = true;
+  this.root.camera.position.y = 160;
 
-  this.root.controls.enableKeys = false;
-  this.root.controls.enableDamping = true;
-  this.root.controls.autoRotateSpeed = -0.03;
-  this.root.controls.dampingFactor = 0.1;
-  this.root.controls.rotateSpeed = 0.125;
-  this.root.controls.minPolarAngle = Math.PI * 0.25;
-  this.root.controls.maxPolarAngle = Math.PI * 0.75;
+  //this.root.controls.enableZoom = false;
+  //this.root.controls.autoRotate = true;
+  //
+  //this.root.controls.enableKeys = false;
+  //this.root.controls.enableDamping = true;
+  //this.root.controls.autoRotateSpeed = -0.03;
+  //this.root.controls.dampingFactor = 0.1;
+  //this.root.controls.rotateSpeed = 0.125;
+  //this.root.controls.minPolarAngle = Math.PI * 0.25;
+  //this.root.controls.maxPolarAngle = Math.PI * 0.75;
 
-  this.root.scene.add(this.root.camera);
+  //this.root.scene.add(this.root.camera);
 
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
   light.position.set(0, 0.4, 1);
@@ -113,7 +115,7 @@ Globe.prototype = {
     ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
 
     var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
-    var threshold = 167;
+    var threshold = 160;
 
     var positions = [];
 
@@ -156,10 +158,27 @@ Globe.prototype = {
       specular:0x111111
     });
     var mesh = new THREE.Mesh(geo, mat);
+
+    mesh.position.y = -5;
+
     this.earth = mesh;
     this.root.scene.add(mesh);
 
-    TweenMax.to(mesh.rotation, 24, {y:Math.PI * -2, ease:Power0.easeIn, repeat:-1});
+    var rotator = new ObjectRotator(mesh);
+
+    //var halo = new THREE.Mesh(
+    //  new THREE.SphereGeometry(config.earthRadius + 0.5, 64, 64),
+    //  new THREE.MeshPhongMaterial({
+    //    transparent:true,
+    //    opacity:0.05,
+    //    color:0xffffff,
+    //    //side:THREE.BackSide
+    //  })
+    //);
+    //
+    //mesh.add(halo);
+
+    //TweenMax.to(mesh.rotation, 24, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
   },
 
   initStars:function() {
@@ -181,7 +200,7 @@ Globe.prototype = {
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
-      controls.enabled = false;
+      //controls.enabled = false;
       hBlurPass.enabled = false;
       vBlurPass.enabled = false;
     });
@@ -191,12 +210,12 @@ Globe.prototype = {
     tl.add(this.createMarkersAnimation(10), 0.0);
 
     tl.call(function() {
-      controls.enabled = true;
+      //controls.enabled = true;
       hBlurPass.enabled = true;
       vBlurPass.enabled = true;
     });
 
-    //tl.timeScale(10);
+    tl.timeScale(10);
   },
 
   createMarkersAnimation:function(duration) {
@@ -219,7 +238,7 @@ Globe.prototype = {
       height:60
     };
     var camera = this.root.camera;
-    var center = new THREE.Vector3();
+    var target = new THREE.Vector3();
 
     var tl = new TimelineMax({
       onUpdate:function() {
@@ -228,11 +247,11 @@ Globe.prototype = {
         var z = Math.sin(proxy.angle) * proxy.distance;
 
         camera.position.set(x, y, z);
-        camera.lookAt(center);
+        camera.lookAt(target);
       }
     });
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, height:0, ease:Power1.easeInOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:20, height:0, ease:Power1.easeInOut});
 
     return tl;
   }
