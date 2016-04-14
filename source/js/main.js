@@ -28,7 +28,7 @@ var Globe = function() {
 
   var loader = new THREE.TextureLoader();
 
-  loader.load('res/tex/earth_dark.jpg', _.bind(function(texture) {
+  loader.load('res/tex/earth_lights.png', _.bind(function(texture) {
     this.processMarkerPositions(texture.image);
 
     this.initEarth(texture);
@@ -102,7 +102,7 @@ Globe.prototype = {
     ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
 
     var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
-    var threshold = 160;
+    var threshold = 200;
 
     var positions = [];
 
@@ -133,14 +133,16 @@ Globe.prototype = {
   },
 
   initEarth:function(texture) {
-    var geo = new THREE.SphereGeometry(config.earthRadius, 32, 32);
+    var geo = new THREE.SphereGeometry(config.earthRadius, 128, 128);
     var mat = new THREE.MeshPhongMaterial({
       map: texture,
       specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
+      displacementMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
+      displacementScale: 0.5,
       bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.jpg'),
       bumpScale: 0.5,
       shininess: 8,
-      specular:0x111111
+      specular:0x222222
     });
     var mesh = new THREE.Mesh(geo, mat);
 
@@ -206,7 +208,7 @@ Globe.prototype = {
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.0375, 4, 4);
+    var prefabGeometry = new THREE.SphereGeometry(0.025, 16, 16);
     var markerSystem = new MarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var animation = TweenMax.fromTo(markerSystem, duration,
       {animationProgress:0},
