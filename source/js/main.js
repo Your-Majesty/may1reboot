@@ -141,7 +141,7 @@ Globe.prototype = {
     var geo = new THREE.SphereGeometry(config.earthRadius, 100, 100);
     var mat = new THREE.MeshPhongMaterial({
       map: new THREE.Texture(),
-      color:0x000000,
+      //color:0x000000,
 
       emissive:0x070707,
 
@@ -180,6 +180,11 @@ Globe.prototype = {
     mesh.add(halo);
 
     TweenMax.to(halo.rotation, 24, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+  },
+
+  setGlobeTexture:function(image) {
+    this.earth.material.map = new THREE.Texture(image);
+    this.earth.material.map.needsUpdate = true;
   },
 
   initStars:function() {
@@ -262,3 +267,33 @@ Globe.prototype = {
 };
 
 window.globe = new Globe();
+
+// drag and drop texture stuff
+
+'drag dragstart dragend dragover dragenter dragleave drop'.split(' ').forEach(function(ev) {
+  document.body.addEventListener(ev, function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  })
+});
+
+document.body.addEventListener('drop', function (e) {
+  //console.log('wow!', e.dataTransfer);
+
+  var files = e.dataTransfer.files;
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var reader = new FileReader();
+
+    reader.readAsDataURL(file);
+    reader.addEventListener('loadend', function(e) {
+      console.log('omg', e);
+
+      var img = document.createElement("img");
+      img.src = e.target.result;
+
+      window.globe.setGlobeTexture(img);
+    })
+  }
+});
