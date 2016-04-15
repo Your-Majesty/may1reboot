@@ -1,3 +1,4 @@
+// based on https://github.com/jeromeetienne/threex.geometricglow/blob/master/threex.atmospherematerial.js
 function AtmosphereMaterial(params) {
   var vertexShader = [
     'varying vec3	vVertexWorldPosition;',
@@ -57,14 +58,14 @@ function AtmosphereMaterial(params) {
       },
       alphaMap : {
         type : 't',
-        value: THREE.ImageUtils.loadTexture(params.alphaMap)
+        value: params.alphaMap
       }
     },
-    vertexShader	: vertexShader,
-    fragmentShader	: fragmentShader,
-    blending	: THREE.AdditiveBlending,
-    transparent	: true,
-    depthWrite	: false
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    depthWrite: false
   });
 }
 AtmosphereMaterial.prototype = Object.create(THREE.ShaderMaterial.prototype);

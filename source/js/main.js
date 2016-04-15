@@ -24,20 +24,24 @@ var Globe = function() {
 
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
-  var loader = new THREE.TextureLoader();
+  this.loader = new THREELoader(_.bind(this.loadedHandler, this));
+  this.loader.loadTexture('earth_data', 'res/tex/earth_lights.png');
+  this.loader.loadTexture('earth_disp', 'res/tex/earth_disp.jpg');
+  this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
+  this.loader.loadTexture('earth_spec', 'res/tex/earth_spec.jpg');
+  this.loader.loadTexture('cloud_alpha_map', 'res/tex/earth_cld_alpha.jpg');
 
-  loader.load('res/tex/earth_lights.png', _.bind(function(texture) {
-    this.processMarkerPositions(texture.image);
-
-    this.initEarth(texture);
-    this.initStars();
-    this.createIntroAnimation();
-
-  }, this));
-
-  console.warn = function() {};
+  console.warn = function() {}; // shhhhh!
 };
 Globe.prototype = {
+  loadedHandler:function() {
+    this.processMarkerPositions();
+
+    this.initEarth();
+    this.initStars();
+    this.createIntroAnimation();
+  },
+
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
     var bloomPass = new THREE.BloomPass(2, 25, 4.0, 512);
@@ -93,7 +97,9 @@ Globe.prototype = {
     //this.lastCamPos = this.root.camera.position.clone();
   //},
 
-  processMarkerPositions:function(dataImage) {
+  processMarkerPositions:function() {
+    var dataImage = this.loader.get('earth_data').image;
+
     this.markerPositions = [];
 
     var cnv = document.createElement('canvas');
@@ -142,14 +148,14 @@ Globe.prototype = {
 
         emissive:0x070707,
 
-        displacementMap: THREE.ImageUtils.loadTexture('res/tex/earth_disp.jpg'),
+        displacementMap: this.loader.get('earth_disp'),
         displacementScale: 0.5,
         displacementBias: -0.1,
 
-        bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.png'),
+        bumpMap: this.loader.get('earth_bump'),
         bumpScale: 0.05,
 
-        specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
+        specularMap: this.loader.get('earth_spec'),
         specular: 0x222222,
         shininess: 8
       })
@@ -157,10 +163,10 @@ Globe.prototype = {
     var halo = new THREE.Mesh(
       new THREE.SphereGeometry(config.earthRadius + 0.75, 64, 64),
       new AtmosphereMaterial({
-        alphaMap:'res/tex/earth_cld_alpha.jpg',
-        color:0xAFD2E4,
-        power:4.0,
-        coefficient:0.8
+        alphaMap: this.loader.get('cloud_alpha_map'),
+        color: 0xAFD2E4,
+        power: 4.0,
+        coefficient: 0.8
       })
     );
 
