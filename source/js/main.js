@@ -18,11 +18,9 @@ var Globe = function() {
 
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
   light.position.set(-2.0, 4.0, 1).normalize();
-  this.root.scene.add(light);
+  this.root.add(light, 'dirLight1');
 
   this.initPostProcessing();
-
-  this.root.onUpdate = _.bind(this.update, this);
 
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
@@ -60,8 +58,8 @@ Globe.prototype = {
     vignettePass.uniforms.darkness.value = 1.25;
     vignettePass.uniforms.centerOffset.value.y = 0.3;
 
-    this.hBlurPass = hBlurPass;
-    this.vBlurPass = vBlurPass;
+    //this.hBlurPass = hBlurPass;
+    //this.vBlurPass = vBlurPass;
     this.vignettePass = vignettePass;
 
     blendPass.uniforms['tDiffuse2'].value = savePass.renderTarget;
@@ -79,7 +77,7 @@ Globe.prototype = {
     ]);
   },
 
-  update:function() {
+  //update:function() {
     //if (this.lastCamPos) {
     //  var delta = new THREE.Vector3();
     //
@@ -93,18 +91,17 @@ Globe.prototype = {
     //}
     //
     //this.lastCamPos = this.root.camera.position.clone();
-  },
+  //},
 
-  processMarkerPositions:function(img) {
+  processMarkerPositions:function(dataImage) {
     this.markerPositions = [];
 
     var cnv = document.createElement('canvas');
     var ctx = cnv.getContext('2d');
 
-    cnv.width = img.width * 0.5;
-    cnv.height = img.height * 0.5;
-
-    ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
+    cnv.width = dataImage.width * 0.5;
+    cnv.height = dataImage.height * 0.5;
+    ctx.drawImage(dataImage, 0, 0, cnv.width, cnv.height);
 
     var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
     var threshold = 240;
@@ -137,36 +134,26 @@ Globe.prototype = {
     }
   },
 
-  initEarth:function(texture) {
-    var geo = new THREE.SphereGeometry(config.earthRadius, 100, 100);
-    var mat = new THREE.MeshPhongMaterial({
-      map: new THREE.Texture(),
-      //color:0x000000,
+  initEarth:function() {
+    var earth = new THREE.Mesh(
+      new THREE.SphereGeometry(config.earthRadius, 100, 100),
+      new THREE.MeshPhongMaterial({
+        map: new THREE.Texture(),
 
-      emissive:0x070707,
+        emissive:0x070707,
 
-      displacementMap: THREE.ImageUtils.loadTexture('res/tex/earth_disp.jpg'),
-      displacementScale: 0.5,
-      displacementBias: -0.1,
+        displacementMap: THREE.ImageUtils.loadTexture('res/tex/earth_disp.jpg'),
+        displacementScale: 0.5,
+        displacementBias: -0.1,
 
-      bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.png'),
-      bumpScale: 0.05,
+        bumpMap: THREE.ImageUtils.loadTexture('res/tex/earth_bump.png'),
+        bumpScale: 0.05,
 
-      specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
-      specular:0x222222,
-      shininess: 8
-    });
-    var mesh = new THREE.Mesh(geo, mat);
-
-    this.earth = mesh;
-    this.root.scene.add(mesh);
-
-    var earthRotationController = new ObjectRotator(mesh);
-
-    TweenMax.ticker.addEventListener('tick', function() {
-      earthRotationController.update();
-    });
-
+        specularMap: THREE.ImageUtils.loadTexture('res/tex/earth_spec.jpg'),
+        specular: 0x222222,
+        shininess: 8
+      })
+    );
     var halo = new THREE.Mesh(
       new THREE.SphereGeometry(config.earthRadius + 0.75, 64, 64),
       new AtmosphereMaterial({
@@ -177,39 +164,47 @@ Globe.prototype = {
       })
     );
 
-    mesh.add(halo);
-
     TweenMax.to(halo.rotation, 24, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+
+    earth.add(halo);
+
+    this.root.add(earth, 'earth');
+
+    var earthRotationController = new ObjectRotator(earth);
+
+    this.root.addUpdateCallback(function() {
+      earthRotationController.update();
+    });
   },
 
   setGlobeTexture:function(image) {
-    this.earth.material.map = new THREE.Texture(image);
-    this.earth.material.map.needsUpdate = true;
+    this.root.objects['earth'].material.map = new THREE.Texture(image);
+    this.root.objects['earth'].material.map.needsUpdate = true;
   },
 
   initStars:function() {
     var prefabGeometry = new THREE.TetrahedronGeometry(0.75);
     var starSystem = new StarAnimationSystem(prefabGeometry, 8000, 100, 2000);
 
-    TweenMax.ticker.addEventListener('tick', function() {
+    this.root.addUpdateCallback(function() {
       starSystem.update();
     });
 
-    this.root.scene.add(starSystem);
+    this.root.add(starSystem);
   },
 
   createIntroAnimation:function() {
-    var controls = this.root.controls;
-    var hBlurPass = this.hBlurPass;
-    var vBlurPass = this.vBlurPass;
+    //var controls = this.root.controls;
+    //var hBlurPass = this.hBlurPass;
+    //var vBlurPass = this.vBlurPass;
     var vignettePass = this.vignettePass;
 
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
       //controls.enabled = false;
-      hBlurPass.enabled = false;
-      vBlurPass.enabled = false;
+      //hBlurPass.enabled = false;
+      //vBlurPass.enabled = false;
     });
     tl.to(this.root.renderer.domElement, 0.25, {opacity:1}, 0);
 
@@ -219,8 +214,8 @@ Globe.prototype = {
 
     tl.call(function() {
       //controls.enabled = true;
-      hBlurPass.enabled = true;
-      vBlurPass.enabled = true;
+      //hBlurPass.enabled = true;
+      //vBlurPass.enabled = true;
     });
 
     tl.timeScale(2);
@@ -234,7 +229,7 @@ Globe.prototype = {
       {animationProgress:1, ease:Power0.easeIn}
     );
 
-    this.earth.add(markerSystem);
+    this.root.objects['earth'].add(markerSystem);
 
     return animation;
   },
@@ -269,14 +264,12 @@ Globe.prototype = {
 window.globe = new Globe();
 
 // drag and drop texture stuff
-
 'drag dragstart dragend dragover dragenter dragleave drop'.split(' ').forEach(function(ev) {
   document.body.addEventListener(ev, function(e) {
     e.preventDefault();
     e.stopPropagation();
   })
 });
-
 document.body.addEventListener('drop', function (e) {
   //console.log('wow!', e.dataTransfer);
 
@@ -288,8 +281,6 @@ document.body.addEventListener('drop', function (e) {
 
     reader.readAsDataURL(file);
     reader.addEventListener('loadend', function(e) {
-      console.log('omg', e);
-
       var img = document.createElement("img");
       img.src = e.target.result;
 

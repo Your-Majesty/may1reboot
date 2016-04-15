@@ -122,7 +122,7 @@ gulp.task('watch', function(callback) {
 });
 
 gulp.task('deploy', ['build'], shell.task([
-  'surge ./build --domain ym-m1r-v6.surge.sh'
+  'surge ./build --domain ym-m1r-v7.surge.sh'
 ]));
 
 gulp.task('serve', ['build'], function() {

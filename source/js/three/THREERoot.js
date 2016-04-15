@@ -1,4 +1,5 @@
 function THREERoot(params) {
+  // defaults
   params = _.extend({
     containerId:'three-container',
     fov:60,
@@ -8,10 +9,17 @@ function THREERoot(params) {
     autoUpdate:true
   }, params);
 
+  // maps and arrays
+  this.updateCallbacks = [];
+  this.resizeCallbacks = [];
+  this.objects = {};
+
+  // renderer
   this.renderer = new THREE.WebGLRenderer();
   this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   document.getElementById(params.containerId).appendChild(this.renderer.domElement);
 
+  // camera
   this.camera = new THREE.PerspectiveCamera(
     params.fov,
     window.innerWidth / window.innerHeight,
@@ -19,36 +27,53 @@ function THREERoot(params) {
     params.zFar
   );
 
+  // scene
   this.scene = new THREE.Scene();
 
+  // optional camera controls
   if (params.createCameraControls) {
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.addUpdateCallback(_.bind(this.controls.update, this.controls));
   }
 
+  // resize handling
   this.resize = _.bind(this.resize, this);
   this.resize();
   window.addEventListener('resize', this.resize, false);
 
+  // tick / update / render
   if (params.autoUpdate) {
     this.tick = _.bind(this.tick, this);
     this.tick();
   }
 }
 THREERoot.prototype = {
+  addUpdateCallback:function(callback) {
+    this.updateCallbacks.push(callback);
+  },
+  addResizeCallback:function(callback) {
+    this.resizeCallbacks.push(callback);
+  },
+  add:function(object, key) {
+    key && (this.objects[key] = object);
+    this.scene.add(object);
+  },
+
   tick: function() {
     this.update();
     this.render();
     requestAnimationFrame(this.tick);
   },
   update: function() {
-    this.controls && this.controls.update();
-    this.onUpdate();
+    this.updateCallbacks.forEach(function(callback) {callback()});
   },
-  onUpdate:function(){},
   render: function() {
     this.renderer.render(this.scene, this.camera);
   },
+
   resize: function() {
+    this.resizeCallbacks.forEach(function(callback) {callback()});
+
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
 
