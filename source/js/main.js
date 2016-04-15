@@ -98,30 +98,41 @@ Globe.prototype = {
   //},
 
   processMarkerPositions:function() {
-    var dataImage = this.loader.get('earth_data').image;
 
-    this.markerPositions = [];
+    var markerImage = this.loader.get('earth_data').image;
+    var markerCnv = document.createElement('canvas');
+    var markerCtx = markerCnv.getContext('2d');
 
-    var cnv = document.createElement('canvas');
-    var ctx = cnv.getContext('2d');
+    markerCnv.width = markerImage.width * 0.5;
+    markerCnv.height = markerImage.height * 0.5;
+    markerCtx.drawImage(markerImage, 0, 0, markerCnv.width, markerCnv.height);
 
-    cnv.width = dataImage.width * 0.5;
-    cnv.height = dataImage.height * 0.5;
-    ctx.drawImage(dataImage, 0, 0, cnv.width, cnv.height);
+    var elevationImage = this.loader.get('earth_disp').image;
+    var elevationCnv = document.createElement('canvas');
+    var elevationCtx = elevationCnv.getContext('2d');
 
-    var data = ctx.getImageData(0, 0, cnv.width, cnv.height).data;
-    var threshold = 240;
+    elevationCnv.width = markerImage.width * 0.5;
+    elevationCnv.height = markerImage.height * 0.5;
+    elevationCtx.drawImage(elevationImage, 0, 0, markerCnv.width, markerCnv.height);
+
+    var markerData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
+    var elevationData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
+
+    var threshold = 200;
+    var elevationScale = 0.125;
+    var elevationOffset = 0.0;
 
     var positions = [];
 
-    for (var i = 0; i < data.length; i+=4) {
-      var r = data[i];
+    for (var i = 0; i < markerData.length; i+=4) {
+      var r = markerData[i];
 
       if (r > threshold) {
-        var x = (i / 4) % cnv.width;
-        var y = ((i / 4) / cnv.width) | 0;
+        var x = ((i / 4) % markerCnv.width) / markerCnv.width;
+        var y = (((i / 4) / markerCnv.width) | 0) / markerCnv.height;
+        var elevation = (elevationData[i] / 255 * elevationScale) + elevationOffset;
 
-        positions.push({x:x / cnv.width, y:y / cnv.height});
+        positions.push({x: x, y: y, elevation: elevation});
       }
     }
 
@@ -131,18 +142,20 @@ Globe.prototype = {
 
     console.log('position count', positions.length);
 
+    this.markerPositions = [];
+
     for (var j = 0; j < positions.length; j++) {
       var p = positions[j];
       var lat = THREE.Math.mapLinear(p.y, 0, 1, 90, -90);
       var lon = THREE.Math.mapLinear(p.x, 0, 1, -180, 180);
 
-      this.markerPositions[j] = utils.llToVec(lat, lon, config.earthRadius);
+      this.markerPositions[j] = utils.llToVec(lat, lon, config.earthRadius + p.elevation);
     }
   },
 
   initEarth:function() {
     var earth = new THREE.Mesh(
-      new THREE.SphereGeometry(config.earthRadius, 100, 100),
+      new THREE.SphereGeometry(config.earthRadius, 200, 200),
       new THREE.MeshPhongMaterial({
         map: new THREE.Texture(),
 
@@ -150,7 +163,7 @@ Globe.prototype = {
 
         displacementMap: this.loader.get('earth_disp'),
         displacementScale: 0.5,
-        displacementBias: -0.1,
+        displacementBias: 0.0,
 
         bumpMap: this.loader.get('earth_bump'),
         bumpScale: 0.05,
