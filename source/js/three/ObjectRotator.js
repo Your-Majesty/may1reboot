@@ -1,4 +1,4 @@
-function ObjectRotator(object, element) {
+function ObjectRotator(object, camera, element) {
   element = element || window;
 
   var isDragging = false;
@@ -17,17 +17,38 @@ function ObjectRotator(object, element) {
   var vMin = -Math.PI * 0.5;
   var vMax = 0.25;
 
-  element.addEventListener('mousedown', function(e) {
-    isDragging = true;
+  var rayCaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
 
-    startPosition.set(e.clientX, e.clientY).sub(center);
-    startRotation.copy(targetRotation);
+  var enabled = true;
+
+  Object.defineProperty(this, 'enabled', {
+    get:function() {return enabled},
+    set:function(v) {enabled = v}
+  });
+
+  element.addEventListener('mousedown', function(e) {
+    if (!enabled) return;
+
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    rayCaster.setFromCamera(mouse, camera);
+
+    if (rayCaster.intersectObject(object).length > 0) {
+      isDragging = true;
+
+      startPosition.set(e.clientX, e.clientY).sub(center);
+      startRotation.copy(targetRotation);
+    }
   });
   element.addEventListener('mouseup', function(e) {
+    if (!enabled) return;
+
     isDragging = false;
   });
   element.addEventListener('mousemove', function(e) {
-    if (!isDragging) return;
+    if (!enabled || !isDragging) return;
 
     position.set(e.clientX, e.clientY).sub(center);
 

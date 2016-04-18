@@ -189,11 +189,9 @@ Globe.prototype = {
 
     this.root.add(earth, 'earth');
 
-    var earthRotationController = new ObjectRotator(earth);
+    this.earthRotationController = new ObjectRotator(earth, this.root.camera);
 
-    this.root.addUpdateCallback(function() {
-      earthRotationController.update();
-    });
+    this.root.addUpdateCallback(_.bind(this.earthRotationController.update, this.earthRotationController));
   },
 
   setGlobeTexture:function(image) {
@@ -213,7 +211,7 @@ Globe.prototype = {
   },
 
   createIntroAnimation:function() {
-    //var controls = this.root.controls;
+    var rotationController = this.earthRotationController;
     //var hBlurPass = this.hBlurPass;
     //var vBlurPass = this.vBlurPass;
     var vignettePass = this.vignettePass;
@@ -221,7 +219,7 @@ Globe.prototype = {
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
-      //controls.enabled = false;
+      rotationController.enabled = false;
       //hBlurPass.enabled = false;
       //vBlurPass.enabled = false;
     });
@@ -232,7 +230,7 @@ Globe.prototype = {
     tl.fromTo(vignettePass.uniforms.offset, 10, {value:0}, {value:1.0}, 0);
 
     tl.call(function() {
-      //controls.enabled = true;
+      rotationController.enabled = true;
       //hBlurPass.enabled = true;
       //vBlurPass.enabled = true;
     });
