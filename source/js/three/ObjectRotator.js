@@ -12,6 +12,7 @@ function ObjectRotator(object, element) {
   var delta = new THREE.Vector2();
 
   var dragSpeed = 0.01;
+  var autoRotateSpeed = 0.01;
   var damping = 0.05;
   var vMin = -Math.PI * 0.5;
   var vMax = 0.25;
@@ -36,6 +37,10 @@ function ObjectRotator(object, element) {
   });
 
   this.update = function() {
+    if (!isDragging) {
+      targetRotation.x += autoRotateSpeed;
+    }
+
     object.rotation.y += (targetRotation.x - object.rotation.y) * damping;
     object.rotation.x += (targetRotation.y - object.rotation.x) * damping;
 
