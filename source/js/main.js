@@ -12,6 +12,9 @@ var Globe = function() {
     createCameraControls:false,
     fov:20
   });
+
+  config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
+
   this.root.renderer.setClearColor(0x101010);
 
   this.root.camera.position.y = 160;
@@ -19,8 +22,6 @@ var Globe = function() {
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
   light.position.set(-2.0, 4.0, 1).normalize();
   this.root.add(light, 'dirLight1');
-
-  this.initPostProcessing();
 
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
@@ -36,66 +37,52 @@ var Globe = function() {
 Globe.prototype = {
   loadedHandler:function() {
     this.processMarkerPositions();
-
     this.initEarth();
     this.initStars();
+    this.initPostProcessing();
     this.createIntroAnimation();
   },
 
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
-    var bloomPass = new THREE.BloomPass(2, 25, 4.0, 512);
+    var bloomPass = new THREE.BloomPass(1.0, 25, 4.0, 512);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
     var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
     var copyPass = new THREE.ShaderPass(THREE.CopyShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
 
-    var blendPass = new THREE.ShaderPass(THREE.BlendShader, 'tDiffuse1');
-    var savePass = new THREE.SavePass(new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight));
-
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
     vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
     hBlurPass.uniforms.strength.value = 1.0;
-    vBlurPass.uniforms.strength.value = 1.0;
+    vBlurPass.uniforms.strength.value = 0.25;
 
     vignettePass.uniforms.offset.value = 1.0;
     vignettePass.uniforms.darkness.value = 1.25;
     vignettePass.uniforms.centerOffset.value.y = 0.3;
 
-    //this.hBlurPass = hBlurPass;
-    //this.vBlurPass = vBlurPass;
     this.vignettePass = vignettePass;
-
-    blendPass.uniforms['tDiffuse2'].value = savePass.renderTarget;
-    blendPass.uniforms['mixRatio'].value = 0.5;
-    blendPass.uniforms['opacity'].value = 1.00;
 
     this.root.initPostProcessing([
       renderPass,
       bloomPass,
-      //hBlurPass,
-      //vBlurPass,
-      blendPass,
-      savePass,
+      hBlurPass,
+      vBlurPass,
       vignettePass
     ]);
-  },
 
-  //update:function() {
-    //if (this.lastCamPos) {
-    //  var delta = new THREE.Vector3();
-    //
-    //  delta.subVectors(this.root.camera.position, this.lastCamPos);
-    //
-    //  var lx = delta.x * 0.25;
-    //  var ly = delta.y * 0.25;
-    //
-    //  this.hBlurPass.uniforms.strength.value = lx;
-    //  this.vBlurPass.uniforms.strength.value = ly;
-    //}
-    //
-    //this.lastCamPos = this.root.camera.position.clone();
-  //},
+    this.root.addUpdateCallback(_.bind(function() {
+      var rs = this.earthRotationController.rotationSpeed;
+
+      vBlurPass.uniforms.strength.value = Math.abs(rs.x) * 0.5;
+      hBlurPass.uniforms.strength.value = Math.abs(rs.y) * 12.0;
+
+    }, this));
+
+    this.root.addResizeCallback(function() {
+      hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
+      vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
+    });
+  },
 
   processMarkerPositions:function() {
 
@@ -118,7 +105,7 @@ Globe.prototype = {
     var markerData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
     var elevationData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
 
-    var threshold = 200;
+    var threshold = 240;
     var elevationScale = 0.125;
     var elevationOffset = 0.0;
 
@@ -174,7 +161,7 @@ Globe.prototype = {
       })
     );
     var halo = new THREE.Mesh(
-      new THREE.SphereGeometry(config.earthRadius + 0.75, 64, 64),
+      new THREE.SphereGeometry(config.earthRadius + 1.00, 64, 64),
       new AtmosphereMaterial({
         alphaMap: this.loader.get('cloud_alpha_map'),
         color: 0xAFD2E4,
@@ -195,8 +182,9 @@ Globe.prototype = {
   },
 
   setGlobeTexture:function(image) {
-    this.root.objects['earth'].material.map = new THREE.Texture(image);
+    this.root.objects['earth'].material.map.image = image;
     this.root.objects['earth'].material.map.needsUpdate = true;
+    this.root.objects['earth'].material.map.anisotropy = config.maxAnisotropy;
   },
 
   initStars:function() {
@@ -207,7 +195,8 @@ Globe.prototype = {
       starSystem.update();
     });
 
-    this.root.add(starSystem);
+    //this.root.add(starSystem);
+    this.root.objects['earth'].add(starSystem);
   },
 
   createIntroAnimation:function() {
@@ -239,7 +228,7 @@ Globe.prototype = {
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.025, 16, 16);
+    var prefabGeometry = new THREE.SphereGeometry(0.025, 8, 8);
     var markerSystem = new MarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var animation = TweenMax.fromTo(markerSystem, duration,
       {animationProgress:0},
@@ -253,7 +242,7 @@ Globe.prototype = {
 
   createCameraAnimation:function(duration) {
     var proxy = {
-      angle:Math.PI * 1.25,
+      angle:Math.PI * 1.5,
       distance:400,
       eyeHeight:60
     };

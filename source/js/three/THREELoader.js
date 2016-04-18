@@ -7,6 +7,8 @@ THREELoader.prototype = {
     var data = this.data;
 
     new THREE.TextureLoader(this.manager).load(path, function(texture) {
+      texture.anisotropy = config.maxAnisotropy;
+
       data[key] = texture;
       onComplete && onComplete(texture);
     });
