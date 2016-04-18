@@ -51,10 +51,16 @@ Globe.prototype = {
     var copyPass = new THREE.ShaderPass(THREE.CopyShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
 
+    //var bokehPass = new THREE.BokehPass(this.root.scene, this.root.camera, {
+    //  focus: 1.0,
+    //  aperture:	0.025,
+    //  maxblur: 0.005,
+    //  width: window.innerWidth,
+    //  height: window.innerHeight
+    //} );
+
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
     vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
-    hBlurPass.uniforms.strength.value = 1.0;
-    vBlurPass.uniforms.strength.value = 0.25;
 
     vignettePass.uniforms.offset.value = 1.0;
     vignettePass.uniforms.darkness.value = 1.25;
@@ -68,6 +74,7 @@ Globe.prototype = {
       hBlurPass,
       vBlurPass,
       vignettePass
+      //bokehPass
     ]);
 
     this.root.addUpdateCallback(_.bind(function() {
