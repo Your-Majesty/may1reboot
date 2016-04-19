@@ -51,29 +51,6 @@ Globe.prototype = {
     var copyPass = new THREE.ShaderPass(THREE.CopyShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
 
-    var bokehPass = new THREE.AdvancedBokehPass(this.root.scene, this.root.camera, {
-      focalDepth: 1.0,
-      focalLength: 24.0,
-
-      fstop: 0.9,
-      maxblur: 1.0,
-      showFocus: 0,
-      manualdof: 0,
-      vignetting: 1,
-      depthblur: 1,
-      threshold: 0.5,
-      gain: 2.0,
-      bias: 0.5,
-      fringe: 0.7,
-      //znear: 0.1,
-      //zfar: 100,
-      noise: 1,
-      dithering: 0.00001,
-      pentagon: 0,
-      shaderFocus: 1,
-      focusCoords: new THREE.Vector2(0.5, 0.5)
-    });
-
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
     vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
 
@@ -85,11 +62,10 @@ Globe.prototype = {
 
     this.root.initPostProcessing([
       renderPass,
-      //bloomPass,
-      //hBlurPass,
-      //vBlurPass,
-      //vignettePass,
-      bokehPass
+      bloomPass,
+      hBlurPass,
+      vBlurPass,
+      vignettePass
     ]);
 
     this.root.addUpdateCallback(_.bind(function() {
