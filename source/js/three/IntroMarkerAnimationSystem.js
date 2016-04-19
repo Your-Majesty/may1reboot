@@ -1,4 +1,4 @@
-function MarkerAnimationSystem(prefabGeometry, endPositions) {
+function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
   var prefabCount = endPositions.length;
   var prefabVertexCount = prefabGeometry.vertices.length;
   var bufferGeometry = new THREE.BAS.PrefabBufferGeometry(prefabGeometry, prefabCount);
@@ -113,6 +113,9 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
   var material = new THREE.BAS.BasicAnimationMaterial({
     shading: THREE.FlatShading,
     vertexColors: THREE.VertexColors,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    wireframe: true,
     uniforms: {
       uTime: {type: 'f', value: 0}
     },
@@ -143,24 +146,19 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
 
       'transformed += cubicBezier(aStartPosition, aControl0, aControl1, aEndPosition, tProgress);',
 
-      'float clr = min(1.0, tProgress + 0.25);',
+      'float clr = tProgress;',
       'vColor.xyz = mix(aStartColor.rgb, color.rgb, clr);'
     ]
-  },
-  {
-    shininess:80,
-    specular:0xaa0400
-    //diffuse: 0xd50c05
-  });
+  }, {});
 
   THREE.Mesh.call(this, bufferGeometry, material);
 
   this.frustumCulled = false;
 }
-MarkerAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
-MarkerAnimationSystem.prototype.constructor = MarkerAnimationSystem;
+IntroMarkerAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
+IntroMarkerAnimationSystem.prototype.constructor = IntroMarkerAnimationSystem;
 
-Object.defineProperty(MarkerAnimationSystem.prototype, 'animationProgress', {
+Object.defineProperty(IntroMarkerAnimationSystem.prototype, 'animationProgress', {
   get: function() {
     return this._animationProgress;
   },

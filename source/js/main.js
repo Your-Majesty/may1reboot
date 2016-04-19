@@ -12,6 +12,7 @@ var Globe = function() {
     createCameraControls:false,
     fov:20
   });
+  window.scene = this.root.scene;
 
   config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
 
@@ -19,14 +20,17 @@ var Globe = function() {
 
   this.root.camera.position.y = 160;
 
-  var light = new THREE.DirectionalLight(0xffffff, 1.0);
-  light.position.set(-2.0, 4.0, 1).normalize();
+  var light;
+
+  light = new THREE.DirectionalLight(0xffffff, 1.0);
+  light.position.set(-1.0, 0.5, -0.1).normalize();
   this.root.add(light, 'dirLight1');
 
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this));
   this.loader.loadTexture('earth_data', 'res/tex/earth_lights.png');
+  this.loader.loadTexture('earth_color', 'res/tex/earth_color.jpg');
   this.loader.loadTexture('earth_disp', 'res/tex/earth_disp.jpg');
   this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
   this.loader.loadTexture('earth_spec', 'res/tex/earth_spec.jpg');
@@ -40,12 +44,13 @@ Globe.prototype = {
     this.initEarth();
     this.initStars();
     this.initPostProcessing();
+
     this.createIntroAnimation();
   },
 
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
-    var bloomPass = new THREE.BloomPass(2.0, 25, 4.0, 1024);
+    var bloomPass = new THREE.BloomPass(1.5, 25, 4.0, 256);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
     var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
@@ -82,7 +87,6 @@ Globe.prototype = {
   },
 
   processMarkerPositions:function() {
-
     var markerImage = this.loader.get('earth_data').image;
     var markerCnv = document.createElement('canvas');
     var markerCtx = markerCnv.getContext('2d');
@@ -141,24 +145,22 @@ Globe.prototype = {
     var earth = new THREE.Mesh(
       new THREE.SphereGeometry(config.earthRadius, 200, 200),
       new THREE.MeshPhongMaterial({
-        map: new THREE.Texture(),
-
-        emissive:0x070707,
+        map: this.loader.get('earth_color'),
 
         displacementMap: this.loader.get('earth_disp'),
         displacementScale: 0.5,
         displacementBias: 0.0,
 
         bumpMap: this.loader.get('earth_bump'),
-        bumpScale: 0.05,
+        bumpScale: 0.1,
 
         specularMap: this.loader.get('earth_spec'),
-        specular: 0x222222,
-        shininess: 8
+        specular: 0x666666,
+        shininess: 1.0
       })
     );
     var halo = new THREE.Mesh(
-      new THREE.SphereGeometry(config.earthRadius + 1.0, 64, 64),
+      new THREE.SphereGeometry(config.earthRadius + 1.0, 100, 100),
       new AtmosphereMaterial({
         alphaMap: this.loader.get('cloud_alpha_map'),
         color: 0xAFD2E4,
@@ -226,15 +228,26 @@ Globe.prototype = {
 
   createMarkersAnimation:function(duration) {
     var prefabGeometry = new THREE.SphereGeometry(0.025, 8, 8);
-    var markerSystem = new MarkerAnimationSystem(prefabGeometry, this.markerPositions);
-    var animation = TweenMax.fromTo(markerSystem, duration,
-      {animationProgress:0},
-      {animationProgress:1, ease:Power0.easeIn}
-    );
+    var introAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
+    var idleAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
 
-    this.root.objects['earth'].add(markerSystem);
+    var tl = new TimelineMax();
+    var root = this.root;
 
-    return animation;
+    tl.call(function() {
+      root.addTo(introAnimation, 'earth');
+    });
+
+    tl.fromTo(introAnimation, duration, {animationProgress:0}, {animationProgress:1, ease:Power0.easeIn});
+    tl.call(function() {
+      root.remove(introAnimation);
+      root.addTo(idleAnimation, 'earth');
+      root.addUpdateCallback(function() {
+        idleAnimation.update();
+      });
+    });
+
+    return tl;
   },
 
   createCameraAnimation:function(duration) {

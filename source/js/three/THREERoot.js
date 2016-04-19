@@ -54,9 +54,32 @@ THREERoot.prototype = {
   addResizeCallback:function(callback) {
     this.resizeCallbacks.push(callback);
   },
+
   add:function(object, key) {
     key && (this.objects[key] = object);
     this.scene.add(object);
+  },
+  addTo:function(object, parentKey, key) {
+    key && (this.objects[key] = object);
+    this.get(parentKey).add(object);
+  },
+  get:function(key) {
+    return this.objects[key];
+  },
+  remove:function(o) {
+    var object;
+
+    if (typeof o === 'string') {
+      object = this.objects[o];
+    }
+    else {
+      object = o;
+    }
+
+    if (object) {
+      object.parent.remove(object);
+      delete this.objects[o];
+    }
   },
 
   tick: function() {
