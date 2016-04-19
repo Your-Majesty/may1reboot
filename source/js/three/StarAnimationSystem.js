@@ -21,8 +21,9 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
   }
 
   // axis angle
-  var aAxis = bufferGeometry.createAttribute('aAxis', 3);
+  var aAxisSpeed = bufferGeometry.createAttribute('aAxisSpeed', 4);
   var axis = new THREE.Vector3();
+  var rotationSpeed;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
     axis.x = THREE.Math.randFloatSpread(2);
@@ -30,12 +31,15 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     axis.z = THREE.Math.randFloatSpread(2);
     axis.normalize();
 
-    for (j = 0; j < prefabVertexCount; j++) {
-      aAxis.array[offset  ] = axis.x;
-      aAxis.array[offset+1] = axis.y;
-      aAxis.array[offset+2] = axis.z;
+    rotationSpeed = THREE.Math.randFloat(0.5, 1.5);
 
-      offset += 3;
+    for (j = 0; j < prefabVertexCount; j++) {
+      aAxisSpeed.array[offset  ] = axis.x;
+      aAxisSpeed.array[offset+1] = axis.y;
+      aAxisSpeed.array[offset+2] = axis.z;
+      aAxisSpeed.array[offset+3] = rotationSpeed;
+
+      offset += 4;
     }
   }
 
@@ -50,11 +54,11 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
       shaderParameters: [
         'uniform float uTime;',
         'attribute vec3 aPosition;',
-        'attribute vec3 aAxis;'
+        'attribute vec4 aAxisSpeed;'
       ],
       shaderVertexInit: [
-        'float angle = uTime;',
-        'vec4 tQuat = quatFromAxisAngle(aAxis, angle);'
+        'float angle = uTime * aAxisSpeed.w;',
+        'vec4 tQuat = quatFromAxisAngle(aAxisSpeed.xyz, angle);'
       ],
       shaderTransformPosition: [
         'transformed = rotateVector(tQuat, transformed);',
@@ -63,7 +67,8 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     },
     {
       diffuse: 0xffffff,
-      shininess: 400
+      specular: 0x000000,
+      shininess: 40
     });
 
   THREE.Mesh.call(this, bufferGeometry, material);
@@ -74,5 +79,5 @@ StarAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
 StarAnimationSystem.prototype.constructor = StarAnimationSystem;
 
 StarAnimationSystem.prototype.update = function() {
-  this.material.uniforms['uTime'].value += (1/30);
+  this.material.uniforms['uTime'].value += (1/60);
 };

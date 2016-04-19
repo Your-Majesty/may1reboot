@@ -45,10 +45,9 @@ Globe.prototype = {
 
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
-    var bloomPass = new THREE.BloomPass(1.0, 25, 4.0, 512);
+    var bloomPass = new THREE.BloomPass(2.0, 25, 4.0, 1024);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
     var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
-    var copyPass = new THREE.ShaderPass(THREE.CopyShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
 
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
@@ -62,17 +61,17 @@ Globe.prototype = {
 
     this.root.initPostProcessing([
       renderPass,
-      bloomPass,
       hBlurPass,
       vBlurPass,
+      bloomPass,
       vignettePass
     ]);
 
     this.root.addUpdateCallback(_.bind(function() {
       var rs = this.earthRotationController.rotationSpeed;
 
-      vBlurPass.uniforms.strength.value = Math.abs(rs.x) * 0.5;
-      hBlurPass.uniforms.strength.value = Math.abs(rs.y) * 12.0;
+      vBlurPass.uniforms.strength.value = Math.abs(rs.x) * 0.25;
+      hBlurPass.uniforms.strength.value = Math.abs(rs.y) * 24.0;
 
     }, this));
 
@@ -159,7 +158,7 @@ Globe.prototype = {
       })
     );
     var halo = new THREE.Mesh(
-      new THREE.SphereGeometry(config.earthRadius + 0.50, 64, 64),
+      new THREE.SphereGeometry(config.earthRadius + 1.0, 64, 64),
       new AtmosphereMaterial({
         alphaMap: this.loader.get('cloud_alpha_map'),
         color: 0xAFD2E4,
@@ -168,7 +167,7 @@ Globe.prototype = {
       })
     );
 
-    TweenMax.to(halo.rotation, 24, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+    TweenMax.to(halo.rotation, 48, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
 
     earth.add(halo);
 
@@ -259,7 +258,7 @@ Globe.prototype = {
       }
     });
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, eyeHeight:eyeHeight, ease:Power1.easeOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, eyeHeight:eyeHeight, ease:Power1.easeInOut});
 
     return tl;
   }

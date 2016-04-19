@@ -12,8 +12,8 @@ function ObjectRotator(object, camera, element) {
   var delta = new THREE.Vector2();
   var rotationSpeed = new THREE.Vector2();
 
-  var dragSpeed = 0.01;
-  var autoRotateSpeed = 0.005;
+  var dragSpeed = 0.0025;
+  var autoRotateSpeed = 0.0025;
   var damping = 0.05;
   var vMin = -Math.PI * 0.5;
   var vMax = 0.25;
