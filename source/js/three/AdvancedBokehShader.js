@@ -10,7 +10,7 @@
 
 
 
-THREE.BokehShader2 = {
+THREE.AdvancedBokehShader = {
 
 	uniforms: {
 

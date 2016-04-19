@@ -29,5 +29,11 @@ var utils = {
   // uses TweenMax
   ease:function(ease, t, b, c, d) {
     return b + ease.getRatio(t / d) * c;
+  },
+
+  applyUniformValues: function(uniforms, values) {
+    for (var key in uniforms) {
+      values[key] && (uniforms[key].value = values[key]);
+    }
   }
 };

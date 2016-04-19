@@ -110,7 +110,7 @@ function MarkerAnimationSystem(prefabGeometry, endPositions) {
     }
   }
 
-  var material = new THREE.BAS.PhongAnimationMaterial({
+  var material = new THREE.BAS.BasicAnimationMaterial({
     shading: THREE.FlatShading,
     vertexColors: THREE.VertexColors,
     uniforms: {
