@@ -62,14 +62,14 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     transparent: true,
     blending: THREE.AdditiveBlending,
     vertexColors: THREE.VertexColors,
-    wireframe: false,
-    side:THREE.DoubleSide,
+    side: THREE.DoubleSide,
+    depthWrite: false,
     uniforms: {
       uTime: {type: 'f', value: 0},
       uMousePosition: {type: 'v3', value: new THREE.Vector3()},
       uMaxDistance: {type: 'f', value:4.0},
       uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
-      uActiveColor: {type: 'c', value: new THREE.Color(0xce6a67)}
+      uActiveColor: {type: 'c', value: new THREE.Color(0xff3f38)} //0xce6a67
     },
     shaderFunctions: [
     ],
@@ -102,7 +102,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     ]
   },
   {
-    opacity:0.95
+    opacity:1.0
   });
 
   THREE.Mesh.call(this, bufferGeometry, material);
