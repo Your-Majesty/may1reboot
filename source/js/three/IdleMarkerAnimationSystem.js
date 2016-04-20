@@ -61,14 +61,26 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
   var material = new THREE.BAS.BasicAnimationMaterial({
     transparent: true,
     blending: THREE.AdditiveBlending,
-    wireframe: true,
+    vertexColors: THREE.VertexColors,
+    wireframe: false,
+    side:THREE.DoubleSide,
     uniforms: {
-      uTime: {type: 'f', value: 0}
+      uTime: {type: 'f', value: 0},
+      uMousePosition: {type: 'v3', value: new THREE.Vector3()},
+      uMaxDistance: {type: 'f', value:4.0},
+      uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
+      uActiveColor: {type: 'c', value: new THREE.Color(0xce6a67)}
     },
     shaderFunctions: [
     ],
     shaderParameters: [
       'uniform float uTime;',
+
+      'uniform vec3 uMousePosition;',
+      'uniform float uMaxDistance;',
+
+      'uniform vec3 uPassiveColor;',
+      'uniform vec3 uActiveColor;',
 
       'attribute float aSpeed;',
       'attribute vec3 aPosition;'
@@ -76,14 +88,21 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     shaderVertexInit: [
     ],
     shaderTransformPosition: [
-      'float scale = 1.0 + 0.5 * sin(uTime * aSpeed);',
+      'float distance = length(transformed + aPosition - uMousePosition);',
+      'float attenuation = (1.0 - min(distance / uMaxDistance, 1.0));',
+
+      'float maxScale = max(attenuation * 4.0, 0.5);',
+
+      'float scale = 1.0 + maxScale * sin(uTime * aSpeed);',
       'transformed *= scale;',
 
       'transformed += aPosition;',
+
+      'vColor = mix(uPassiveColor, uActiveColor, attenuation);'
     ]
   },
   {
-    diffuse:0xd50c05
+    opacity:0.95
   });
 
   THREE.Mesh.call(this, bufferGeometry, material);
@@ -93,6 +112,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
 IdleMarkerAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
 IdleMarkerAnimationSystem.prototype.constructor = IdleMarkerAnimationSystem;
 
-IdleMarkerAnimationSystem.prototype.update = function() {
+IdleMarkerAnimationSystem.prototype.update = function(point) {
+  point && this.material.uniforms['uMousePosition'].value.copy(point);
   this.material.uniforms['uTime'].value += (1/60);
 };

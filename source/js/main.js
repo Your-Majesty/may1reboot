@@ -200,16 +200,12 @@ Globe.prototype = {
 
   createIntroAnimation:function() {
     var rotationController = this.earthRotationController;
-    //var hBlurPass = this.hBlurPass;
-    //var vBlurPass = this.vBlurPass;
     var vignettePass = this.vignettePass;
 
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
       rotationController.enabled = false;
-      //hBlurPass.enabled = false;
-      //vBlurPass.enabled = false;
     });
     tl.to(this.root.renderer.domElement, 0.25, {opacity:1}, 0);
 
@@ -219,17 +215,17 @@ Globe.prototype = {
 
     tl.call(function() {
       rotationController.enabled = true;
-      //hBlurPass.enabled = true;
-      //vBlurPass.enabled = true;
     });
 
     tl.timeScale(2);
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.025, 8, 8);
+    var prefabGeometry = new THREE.SphereGeometry(0.025, 6, 6);
     var introAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
+
     var idleAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
+    var rotationController = this.earthRotationController;
 
     var tl = new TimelineMax();
     var root = this.root;
@@ -238,12 +234,35 @@ Globe.prototype = {
       root.addTo(introAnimation, 'earth');
     });
 
+    var earth = root.get('earth');
+    var earthMatrixInverse = new THREE.Matrix4();
+    var searchLight = new THREE.PointLight(0xffffff, 1.0, 8.0, 2.0);
+    var center = new THREE.Vector3();
+
+    root.addTo(searchLight, 'earth');
+
     tl.fromTo(introAnimation, duration, {animationProgress:0}, {animationProgress:1, ease:Power0.easeIn});
     tl.call(function() {
       root.remove(introAnimation);
       root.addTo(idleAnimation, 'earth');
       root.addUpdateCallback(function() {
-        idleAnimation.update();
+        var i = rotationController.objectPointerIntersections[0];
+        var point = i ? i.point : null;
+
+        if (point) {
+          earthMatrixInverse.identity().getInverse(earth.matrixWorld);
+          point.applyMatrix4(earthMatrixInverse);
+
+          searchLight.visible = true;
+          searchLight.position.copy(point);
+          searchLight.position.multiplyScalar(1.25);
+        }
+        else {
+          point = center;
+          searchLight.visible = false;
+        }
+
+        idleAnimation.update(point);
       });
     });
 

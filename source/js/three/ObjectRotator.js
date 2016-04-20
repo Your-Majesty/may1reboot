@@ -19,17 +19,24 @@ function ObjectRotator(object, camera, element) {
   var vMax = 0.25;
 
   var rayCaster = new THREE.Raycaster();
-  var mouse = new THREE.Vector2();
+  var mouseNDC = new THREE.Vector2();
+  var objectPointerIntersections = [];
+
+  function updateIntersections() {
+
+    rayCaster.setFromCamera(mouseNDC, camera);
+    object.updateMatrixWorld(true);
+
+    objectPointerIntersections = rayCaster.intersectObject(object);
+  }
 
   element.addEventListener('mousedown', function(e) {
+    mouseNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
     if (!enabled) return;
 
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-    rayCaster.setFromCamera(mouse, camera);
-
-    if (rayCaster.intersectObject(object).length > 0) {
+    if (objectPointerIntersections.length > 0) {
       isDragging = true;
 
       startPosition.set(e.clientX, e.clientY).sub(center);
@@ -42,6 +49,9 @@ function ObjectRotator(object, camera, element) {
     isDragging = false;
   });
   element.addEventListener('mousemove', function(e) {
+    mouseNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
     if (!enabled || !isDragging) return;
 
     position.set(e.clientX, e.clientY).sub(center);
@@ -52,6 +62,9 @@ function ObjectRotator(object, camera, element) {
   });
 
   this.update = function() {
+
+    updateIntersections();
+
     if (!isDragging) {
       targetRotation.x += autoRotateSpeed;
     }
@@ -73,5 +86,9 @@ function ObjectRotator(object, camera, element) {
 
   Object.defineProperty(this, 'rotationSpeed', {
     get:function() {return rotationSpeed}
+  });
+
+  Object.defineProperty(this, 'objectPointerIntersections', {
+    get:function() {return objectPointerIntersections}
   });
 }
