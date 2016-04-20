@@ -2,6 +2,8 @@
 
 //=require utils.js
 //=require three/*.js
+//=require objects/*.js
+//=require controllers/*.js
 
 var config = {
   earthRadius:8
@@ -20,9 +22,7 @@ var Globe = function() {
 
   this.root.camera.position.y = 160;
 
-  var light;
-
-  light = new THREE.DirectionalLight(0xffffff, 1.0);
+  var light = new THREE.DirectionalLight(0xffffff, 1.0);
   light.position.set(-1.0, 0.5, -0.1).normalize();
   this.root.add(light, 'dirLight1');
 
@@ -40,6 +40,9 @@ var Globe = function() {
 };
 Globe.prototype = {
   loadedHandler:function() {
+    this.pointerController = new PointerController(this.root.camera);
+    this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));
+
     this.processMarkerPositions();
     this.initEarth();
     this.initStars();
@@ -174,8 +177,9 @@ Globe.prototype = {
     earth.add(halo);
 
     this.root.add(earth, 'earth');
+    this.pointerController.register(earth);
 
-    this.earthRotationController = new ObjectRotator(earth, this.root.camera);
+    this.earthRotationController = new ObjectRotationController(earth);
 
     this.root.addUpdateCallback(_.bind(this.earthRotationController.update, this.earthRotationController));
   },
@@ -217,7 +221,7 @@ Globe.prototype = {
       rotationController.enabled = true;
     });
 
-    tl.timeScale(2);
+    tl.timeScale(12);
   },
 
   createMarkersAnimation:function(duration) {
@@ -225,28 +229,34 @@ Globe.prototype = {
     var introAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
 
     var idleAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
-    var rotationController = this.earthRotationController;
+    var pointerController = this.pointerController;
 
     var tl = new TimelineMax();
     var root = this.root;
 
-    tl.call(function() {
-      root.addTo(introAnimation, 'earth');
-    });
-
     var earth = root.get('earth');
+    var center = new THREE.Vector3();
     var earthMatrixInverse = new THREE.Matrix4();
     var searchLight = new THREE.PointLight(0xffffff, 1.0, 8.0, 2.0);
-    var center = new THREE.Vector3();
 
     root.addTo(searchLight, 'earth');
 
+    earth.addEventListener('pointer_down', function(e) {
+      TweenMax.fromTo(idleAnimation, 0.25,
+        {attenuationDistance:2.0},
+        {attenuationDistance:6.0, ease:Power2.easeOut, repeat:1, yoyo:true}
+      )
+    });
+
+    tl.call(function() {
+      root.addTo(introAnimation, 'earth');
+    });
     tl.fromTo(introAnimation, duration, {animationProgress:0}, {animationProgress:1, ease:Power0.easeIn});
     tl.call(function() {
       root.remove(introAnimation);
       root.addTo(idleAnimation, 'earth');
       root.addUpdateCallback(function() {
-        var i = rotationController.objectPointerIntersections[0];
+        var i = pointerController.intersections[0];
         var point = i ? i.point : null;
 
         if (point) {

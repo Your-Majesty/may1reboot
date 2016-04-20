@@ -67,7 +67,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     uniforms: {
       uTime: {type: 'f', value: 0},
       uMousePosition: {type: 'v3', value: new THREE.Vector3()},
-      uMaxDistance: {type: 'f', value:4.0},
+      uAttenuationDistance: {type: 'f', value: 2.0},
       uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
       uActiveColor: {type: 'c', value: new THREE.Color(0xff3f38)} //0xce6a67
     },
@@ -77,7 +77,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
       'uniform float uTime;',
 
       'uniform vec3 uMousePosition;',
-      'uniform float uMaxDistance;',
+      'uniform float uAttenuationDistance;',
 
       'uniform vec3 uPassiveColor;',
       'uniform vec3 uActiveColor;',
@@ -89,7 +89,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     ],
     shaderTransformPosition: [
       'float distance = length(transformed + aPosition - uMousePosition);',
-      'float attenuation = (1.0 - min(distance / uMaxDistance, 1.0));',
+      'float attenuation = (1.0 - min(distance / uAttenuationDistance, 1.0));',
 
       'float maxScale = max(attenuation * 4.0, 0.5);',
 
@@ -116,3 +116,12 @@ IdleMarkerAnimationSystem.prototype.update = function(point) {
   point && this.material.uniforms['uMousePosition'].value.copy(point);
   this.material.uniforms['uTime'].value += (1/60);
 };
+
+Object.defineProperty(IdleMarkerAnimationSystem.prototype, 'attenuationDistance', {
+  get: function() {
+    return this.material.uniforms['uAttenuationDistance'].value;
+  },
+  set: function(v) {
+    this.material.uniforms['uAttenuationDistance'].value = v;
+  }
+});
