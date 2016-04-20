@@ -148,8 +148,8 @@ Globe.prototype = {
         map: this.loader.get('earth_color'),
 
         displacementMap: this.loader.get('earth_disp'),
-        displacementScale: 0.5,
-        displacementBias: 0.0,
+        displacementScale: 0.4,
+        displacementBias: -0.1,
 
         bumpMap: this.loader.get('earth_bump'),
         bumpScale: 0.1,

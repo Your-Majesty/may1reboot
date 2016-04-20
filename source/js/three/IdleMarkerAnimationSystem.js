@@ -10,7 +10,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
   var speed;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    speed = THREE.Math.randFloat(1.0, 3.0);
+    speed = THREE.Math.randFloat(1.0, 4.0);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aSpeed.array[offset++] = speed;
