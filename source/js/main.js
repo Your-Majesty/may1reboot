@@ -46,6 +46,7 @@ Globe.prototype = {
     this.processMarkerPositions();
     this.initEarth();
     this.initStars();
+    this.initMarkers();
     this.initPostProcessing();
 
     this.createIntroAnimation();
@@ -180,14 +181,7 @@ Globe.prototype = {
     this.pointerController.register(earth);
 
     this.earthRotationController = new ObjectRotationController(earth);
-
     this.root.addUpdateCallback(_.bind(this.earthRotationController.update, this.earthRotationController));
-  },
-
-  setGlobeTexture:function(image) {
-    this.root.objects['earth'].material.map.image = image;
-    this.root.objects['earth'].material.map.needsUpdate = true;
-    this.root.objects['earth'].material.map.anisotropy = config.maxAnisotropy;
   },
 
   initStars:function() {
@@ -198,8 +192,48 @@ Globe.prototype = {
       starSystem.update();
     });
 
-    //this.root.add(starSystem);
-    this.root.objects['earth'].add(starSystem);
+    this.root.addTo(starSystem, 'earth');
+  },
+
+  initMarkers:function() {
+    var prefabGeometry = new THREE.SphereGeometry(0.025, 6, 6);
+    var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
+    var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
+
+    var pointerController = this.pointerController;
+    var earth = this.root.get('earth');
+    var center = new THREE.Vector3();
+    var earthMatrixInverse = new THREE.Matrix4();
+
+    var searchLight = new THREE.PointLight(0xffffff, 1.0, 8.0, 2.0);
+    this.root.addTo(searchLight, 'earth');
+
+    earth.addEventListener('pointer_down', function(e) {
+      TweenMax.fromTo(idleAnimation, 0.25,
+        {attenuationDistance:2.0},
+        {attenuationDistance:6.0, ease:Power2.easeOut, repeat:1, yoyo:true}
+      )
+    });
+
+    this.root.addUpdateCallback(function() {
+      var i = pointerController.intersections[0];
+      var point = i ? i.point : null;
+
+      if (point) {
+        earthMatrixInverse.identity().getInverse(earth.matrixWorld);
+        point.applyMatrix4(earthMatrixInverse);
+
+        searchLight.visible = true;
+        searchLight.position.copy(point);
+        searchLight.position.multiplyScalar(1.25);
+      }
+      else {
+        point = center;
+        searchLight.visible = false;
+      }
+
+      idleAnimation.update(point);
+    });
   },
 
   createIntroAnimation:function() {
@@ -225,28 +259,11 @@ Globe.prototype = {
   },
 
   createMarkersAnimation:function(duration) {
-    var prefabGeometry = new THREE.SphereGeometry(0.025, 6, 6);
-    var introAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
-
-    var idleAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
-    var pointerController = this.pointerController;
+    var introAnimation = this.introMarkerAnimation;
+    var idleAnimation = this.idleMakerAnimation;
 
     var tl = new TimelineMax();
     var root = this.root;
-
-    var earth = root.get('earth');
-    var center = new THREE.Vector3();
-    var earthMatrixInverse = new THREE.Matrix4();
-    var searchLight = new THREE.PointLight(0xffffff, 1.0, 8.0, 2.0);
-
-    root.addTo(searchLight, 'earth');
-
-    earth.addEventListener('pointer_down', function(e) {
-      TweenMax.fromTo(idleAnimation, 0.25,
-        {attenuationDistance:2.0},
-        {attenuationDistance:6.0, ease:Power2.easeOut, repeat:1, yoyo:true}
-      )
-    });
 
     tl.call(function() {
       root.addTo(introAnimation, 'earth');
@@ -255,30 +272,10 @@ Globe.prototype = {
     tl.call(function() {
       root.remove(introAnimation);
       root.addTo(idleAnimation, 'earth');
-      root.addUpdateCallback(function() {
-        var i = pointerController.intersections[0];
-        var point = i ? i.point : null;
-
-        if (point) {
-          earthMatrixInverse.identity().getInverse(earth.matrixWorld);
-          point.applyMatrix4(earthMatrixInverse);
-
-          searchLight.visible = true;
-          searchLight.position.copy(point);
-          searchLight.position.multiplyScalar(1.25);
-        }
-        else {
-          point = center;
-          searchLight.visible = false;
-        }
-
-        idleAnimation.update(point);
-      });
     });
 
     return tl;
   },
-
   createCameraAnimation:function(duration) {
     var proxy = {
       angle:Math.PI * 1.5,
@@ -303,7 +300,13 @@ Globe.prototype = {
     tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, eyeHeight:eyeHeight, ease:Power1.easeInOut});
 
     return tl;
-  }
+  },
+
+  setGlobeTexture:function(image) {
+    this.root.objects['earth'].material.map.image = image;
+    this.root.objects['earth'].material.map.needsUpdate = true;
+    this.root.objects['earth'].material.map.anisotropy = config.maxAnisotropy;
+  },
 };
 
 window.globe = new Globe();
