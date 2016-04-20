@@ -209,10 +209,11 @@ Globe.prototype = {
     this.root.addTo(searchLight, 'earth');
 
     earth.addEventListener('pointer_down', function(e) {
-      TweenMax.fromTo(idleAnimation, 0.25,
-        {attenuationDistance:2.0},
-        {attenuationDistance:6.0, ease:Power2.easeOut, repeat:1, yoyo:true}
-      )
+      TweenMax.to(idleAnimation, 1.0, {attenuationDistance:8.0, ease:Power2.easeOut});
+    });
+
+    earth.addEventListener('pointer_up', function(e) {
+      TweenMax.to(idleAnimation, 1.0, {attenuationDistance:2.0, ease:Power2.easeOut});
     });
 
     this.root.addUpdateCallback(function() {

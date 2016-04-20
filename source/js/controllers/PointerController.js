@@ -9,6 +9,8 @@ function PointerController(camera, element) {
   var intersections = [];
   var objects = [];
 
+  var downObject = null;
+
   function updateMouse(viewX, viewY) {
     pointerXY.x = viewX;
     pointerXY.y = viewY;
@@ -27,8 +29,21 @@ function PointerController(camera, element) {
     var intersection = updateIntersections()[0];
 
     if (intersection) {
+      downObject = intersection.object;
       intersection.object.dispatchEvent({
         type: 'pointer_down',
+        pointer: pointerXY.clone(),
+        intersection: intersection
+      });
+    }
+  }
+
+  function handlePointerUp() {
+    var intersection = updateIntersections()[0];
+
+    if (downObject) {
+      downObject.dispatchEvent({
+        type: 'pointer_up',
         pointer: pointerXY.clone(),
         intersection: intersection
       });
@@ -40,7 +55,8 @@ function PointerController(camera, element) {
     handlePointerDown();
   });
   element.addEventListener('mouseup', function(e) {
-
+    updateMouse(e.clientX, e.clientY);
+    handlePointerUp();
   });
   element.addEventListener('mousemove', function(e) {
     updateMouse(e.clientX, e.clientY);
