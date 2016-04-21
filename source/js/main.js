@@ -256,7 +256,7 @@ Globe.prototype = {
       rotationController.enabled = true;
     });
 
-    tl.timeScale(12);
+    tl.timeScale(2);
   },
 
   createMarkersAnimation:function(duration) {
