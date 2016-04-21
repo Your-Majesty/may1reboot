@@ -56,11 +56,13 @@ Globe.prototype = {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
     var bloomPass = new THREE.BloomPass(1.5, 25, 4.0, 256);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
-    var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
+    var fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
     var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
 
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
-    vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
+
+    fxaaPass.uniforms.resolution.value.x = 1.0 / window.innerWidth;
+    fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
 
     vignettePass.uniforms.offset.value = 1.0;
     vignettePass.uniforms.darkness.value = 1.25;
@@ -71,22 +73,22 @@ Globe.prototype = {
     this.root.initPostProcessing([
       renderPass,
       hBlurPass,
-      vBlurPass,
       bloomPass,
+      fxaaPass,
       vignettePass
     ]);
 
     this.root.addUpdateCallback(_.bind(function() {
       var rs = this.earthRotationController.rotationSpeed;
 
-      vBlurPass.uniforms.strength.value = Math.abs(rs.x) * 0.25;
       hBlurPass.uniforms.strength.value = Math.abs(rs.y) * 24.0;
 
     }, this));
 
     this.root.addResizeCallback(function() {
       hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
-      vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
+      fxaaPass.uniforms.resolution.value.x = 1.0 / window.innerWidth;
+      fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
     });
   },
 
@@ -172,10 +174,21 @@ Globe.prototype = {
         coefficient: 0.8
       })
     );
+    var halo2 = new THREE.Mesh(
+      new THREE.SphereGeometry(config.earthRadius + 0.99, 100, 100),
+      new AtmosphereMaterial({
+        alphaMap: this.loader.get('cloud_alpha_map'),
+        color: 0xAFD2E4,
+        power: 4.0,
+        coefficient: 0.8
+      })
+    );
 
     TweenMax.to(halo.rotation, 48, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+    TweenMax.to(halo2.rotation, 48, {y:Math.PI * -2, ease:Power0.easeIn, repeat:-1});
 
     earth.add(halo);
+    earth.add(halo2);
 
     this.root.add(earth, 'earth');
     this.pointerController.register(earth);
@@ -196,7 +209,7 @@ Globe.prototype = {
   },
 
   initMarkers:function() {
-    var prefabGeometry = new THREE.SphereGeometry(0.025, 6, 6);
+    var prefabGeometry = new THREE.SphereGeometry(0.025, 8, 6);
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
 

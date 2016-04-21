@@ -16,7 +16,7 @@ function THREERoot(params) {
 
   // renderer
   this.renderer = new THREE.WebGLRenderer();
-  this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
   document.getElementById(params.containerId).appendChild(this.renderer.domElement);
 
   // camera
@@ -95,17 +95,17 @@ THREERoot.prototype = {
   },
 
   resize: function() {
-    this.resizeCallbacks.forEach(function(callback) {callback()});
-
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    this.resizeCallbacks.forEach(function(callback) {callback()});
   },
 
   // post processing
   initPostProcessing:function(passes) {
-    this.composer = new THREE.EffectComposer(this.renderer);
+    var composer = this.composer = new THREE.EffectComposer(this.renderer);
 
     for (var i = 0; i < passes.length; i++) {
       var pass = passes[i];
@@ -119,5 +119,9 @@ THREERoot.prototype = {
       this.renderer.clear();
       this.composer.render();
     }, this);
+
+    this.addResizeCallback(function() {
+      composer.setSize(window.innerWidth, window.innerHeight);
+    });
   }
 };
