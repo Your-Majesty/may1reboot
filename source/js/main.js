@@ -174,21 +174,10 @@ Globe.prototype = {
         coefficient: 0.8
       })
     );
-    var halo2 = new THREE.Mesh(
-      new THREE.SphereGeometry(config.earthRadius + 0.99, 100, 100),
-      new AtmosphereMaterial({
-        alphaMap: this.loader.get('cloud_alpha_map'),
-        color: 0xAFD2E4,
-        power: 4.0,
-        coefficient: 0.8
-      })
-    );
 
     TweenMax.to(halo.rotation, 48, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
-    TweenMax.to(halo2.rotation, 48, {y:Math.PI * -2, ease:Power0.easeIn, repeat:-1});
 
     earth.add(halo);
-    earth.add(halo2);
 
     this.root.add(earth, 'earth');
     this.pointerController.register(earth);
