@@ -6,7 +6,10 @@
 //=require controllers/*.js
 
 var config = {
-  earthRadius:8
+  earthRadius:8,
+  maxAnisotropy:1,
+
+  dirBlurFactor:24
 };
 
 var Globe = function() {
@@ -16,17 +19,16 @@ var Globe = function() {
   });
   window.scene = this.root.scene;
 
+  this.initGUI();
+
   config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
 
   this.root.renderer.setClearColor(0x101010);
-
   this.root.camera.position.y = 160;
 
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
   light.position.set(-1.0, 0.5, -0.1).normalize();
   this.root.add(light, 'dirLight1');
-
-  TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this));
   this.loader.loadTexture('earth_data', 'res/tex/earth_data.png');
@@ -35,6 +37,8 @@ var Globe = function() {
   this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
   this.loader.loadTexture('earth_spec', 'res/tex/earth_spec.jpg');
   this.loader.loadTexture('cloud_alpha_map', 'res/tex/earth_cld_alpha.jpg');
+
+  TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
   console.warn = function() {}; // shhhhh!
 };
@@ -50,6 +54,25 @@ Globe.prototype = {
     this.initPostProcessing();
 
     this.createIntroAnimation();
+
+  },
+
+  initGUI:function() {
+    var gui = this.gui = new dat.GUI();
+
+    //gui.domElement.style.visibility = 'hidden';
+    gui.domElement.parentNode.style.zIndex = '9001';
+    gui.width = 400;
+    window.addEventListener('keydown', function(e) {
+      if (e.keyCode === 192) { // tilde
+        if (gui.domElement.style.visibility === 'hidden') {
+          gui.domElement.style.visibility = 'visible';
+        }
+        else {
+          gui.domElement.style.visibility = 'hidden';
+        }
+      }
+    });
   },
 
   initPostProcessing:function() {
@@ -80,9 +103,7 @@ Globe.prototype = {
 
     this.root.addUpdateCallback(_.bind(function() {
       var rs = this.earthRotationController.rotationSpeed;
-
-      hBlurPass.uniforms.strength.value = Math.abs(rs.y) * 24.0;
-
+      hBlurPass.uniforms.strength.value = Math.abs(rs.y) * config.dirBlurFactor;
     }, this));
 
     this.root.addResizeCallback(function() {
@@ -90,6 +111,16 @@ Globe.prototype = {
       fxaaPass.uniforms.resolution.value.x = 1.0 / window.innerWidth;
       fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
     });
+
+    // DAT.GUI
+
+    var folder = this.gui.addFolder('postprocessing');
+    folder.add(config, 'dirBlurFactor').name('motion blur factor');
+    folder.add(vignettePass.uniforms.offset, 'value').name('vignette offset');
+    folder.add(vignettePass.uniforms.darkness, 'value').name('vignette darkness');
+    folder.add(vignettePass.uniforms.centerOffset.value, 'y').name('vignette center offset');
+    folder.add(bloomPass.copyUniforms.opacity, 'value').name('bloom strenght');
+    folder.add(fxaaPass, 'enabled').name('enable fxaa');
   },
 
   processMarkerPositions:function() {
@@ -155,7 +186,7 @@ Globe.prototype = {
 
         displacementMap: this.loader.get('earth_disp'),
         displacementScale: 0.4,
-        displacementBias: -0.1,
+        displacementBias: -0.10,
 
         bumpMap: this.loader.get('earth_bump'),
         bumpScale: 0.1,
@@ -184,6 +215,25 @@ Globe.prototype = {
 
     this.earthRotationController = new ObjectRotationController(earth);
     this.root.addUpdateCallback(_.bind(this.earthRotationController.update, this.earthRotationController));
+
+    // DAT.GUI
+
+    var earthFolder = this.gui.addFolder('earth');
+    earthFolder.add(earth.material, 'displacementScale');
+    earthFolder.add(earth.material, 'displacementBias');
+    utils.createColorController(earthFolder, earth.material, 'color', 'earth color');
+    utils.createColorController(earthFolder, earth.material, 'emissive', 'earth emissive');
+    utils.createColorController(earthFolder, earth.material, 'specular', 'earth specular');
+    earthFolder.add(earth.material, 'shininess').name('specular focus');
+
+    utils.createColorController(earthFolder, halo.material.uniforms.glowColor, 'value', 'atmosphere color');
+    earthFolder.add(halo.material.uniforms.coefficient, 'value').name('atmosphere coefficient');
+    earthFolder.add(halo.material.uniforms.power, 'value').name('atmosphere power');
+
+    var controlsFolder = this.gui.addFolder('earth dragging');
+    controlsFolder.add(this.earthRotationController, 'dragSpeed').name('drag speed');
+    controlsFolder.add(this.earthRotationController, 'autoRotateSpeed').name('auto rotate speed');
+    controlsFolder.add(this.earthRotationController, 'damping', 0.0, 1.0).name('smoothing');
   },
 
   initStars:function() {
@@ -195,6 +245,14 @@ Globe.prototype = {
     });
 
     this.root.addTo(starSystem, 'earth');
+
+    // DAT.GUI
+
+    var folder = this.gui.addFolder('stars');
+    utils.createColorController(folder, starSystem.material, 'color', 'star color');
+    utils.createColorController(folder, starSystem.material, 'emissive', 'star emissive');
+    utils.createColorController(folder, starSystem.material, 'specular', 'star specular');
+    folder.add(starSystem.material, 'shininess').name('specular focus');
   },
 
   initMarkers:function() {
@@ -209,16 +267,21 @@ Globe.prototype = {
     var searchLight = new THREE.PointLight(0xffffff, 0.0, 8.0, 2.0);
     this.root.addTo(searchLight, 'earth');
 
+    var interactionSettings = {
+      overAttenuationDistance: 2.0,
+      downAttenuationDistance: 6.0
+    };
+
     earth.addEventListener('pointer_down', function(e) {
-      TweenMax.to(idleAnimation, 1.0, {attenuationDistance:8.0, ease:Power2.easeOut});
+      TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.downAttenuationDistance, ease:Power2.easeOut});
     });
 
     earth.addEventListener('pointer_up', function(e) {
-      TweenMax.to(idleAnimation, 1.0, {attenuationDistance:2.0, ease:Power2.easeOut});
+      TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
     });
 
     earth.addEventListener('pointer_over', function(e) {
-      TweenMax.fromTo(idleAnimation, 0.5, {attenuationDistance:0.0}, {attenuationDistance:2.0, ease:Power2.easeOut});
+      TweenMax.fromTo(idleAnimation, 0.5, {attenuationDistance:0.0}, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
       TweenMax.fromTo(searchLight, 0.5, {intensity:0.0}, {intensity:1.0, ease:Power2.easeOut});
     });
 
@@ -243,6 +306,16 @@ Globe.prototype = {
     this.root.addUpdateCallback(function() {
       idleAnimation.update();
     });
+
+    // DAT.GUI
+
+    var folder = this.gui.addFolder('markers');
+    utils.createColorController(folder, idleAnimation.material.uniforms.uPassiveColor, 'value', 'passive color');
+    utils.createColorController(folder, idleAnimation.material.uniforms.uActiveColor, 'value', 'active color');
+    folder.add(idleAnimation.material.uniforms.uScale.value, 'x').name('passive scale delta');
+    folder.add(idleAnimation.material.uniforms.uScale.value, 'y').name('active scale delta');
+    folder.add(interactionSettings, 'overAttenuationDistance').name('hover radius');
+    folder.add(interactionSettings, 'overAttenuationDistance').name('downAttenuationDistance radius');
   },
 
   createIntroAnimation:function() {
@@ -343,5 +416,47 @@ document.body.addEventListener('drop', function (e) {
 
       window.globe.setGlobeTexture(img);
     })
+  }
+});
+
+// colors getters for gui
+Object.defineProperty(THREE.BAS.PhongAnimationMaterial.prototype, 'color', {
+  get: function () {
+    return this.uniforms.diffuse.value;
+  },
+  set: function (v) {
+    this.uniforms.diffuse.value.set(v);
+  }
+});
+Object.defineProperty(THREE.BAS.PhongAnimationMaterial.prototype, 'specular', {
+  get: function () {
+    return this.uniforms.specular.value;
+  },
+  set: function (v) {
+    this.uniforms.specular.value.set(v);
+  }
+});
+Object.defineProperty(THREE.BAS.PhongAnimationMaterial.prototype, 'emissive', {
+  get: function () {
+    return this.uniforms.emissive.value;
+  },
+  set: function (v) {
+    this.uniforms.emissive.value.set(v);
+  }
+});
+Object.defineProperty(THREE.BAS.PhongAnimationMaterial.prototype, 'shininess', {
+  get: function () {
+    return this.uniforms.shininess.value;
+  },
+  set: function (v) {
+    this.uniforms.shininess.value = v;
+  }
+});
+Object.defineProperty(THREE.BAS.BasicAnimationMaterial.prototype, 'color', {
+  get: function () {
+    return this.uniforms.diffuse.value;
+  },
+  set: function (v) {
+    this.uniforms.diffuse.value.set(v);
   }
 });

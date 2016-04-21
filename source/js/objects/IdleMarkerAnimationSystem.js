@@ -67,7 +67,9 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     uniforms: {
       uTime: {type: 'f', value: 0},
       uPointerPosition: {type: 'v3', value: new THREE.Vector3()},
+
       uAttenuationDistance: {type: 'f', value: 2.0},
+      uScale: {type: 'v2', value: new THREE.Vector2(0.5, 4.0)}, // min/max
       uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
       uActiveColor: {type: 'c', value: new THREE.Color(0xff3f38)} //0xce6a67
     },
@@ -75,9 +77,10 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     ],
     shaderParameters: [
       'uniform float uTime;',
-
       'uniform vec3 uPointerPosition;',
+
       'uniform float uAttenuationDistance;',
+      'uniform vec2 uScale;',
 
       'uniform vec3 uPassiveColor;',
       'uniform vec3 uActiveColor;',
@@ -91,7 +94,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
       'float distance = length(transformed + aPosition - uPointerPosition);',
       'float attenuation = (1.0 - min(distance / uAttenuationDistance, 1.0));',
 
-      'float maxScale = max(attenuation * 4.0, 0.5);',
+      'float maxScale = max(attenuation * uScale.y, uScale.x);',
 
       'float scale = 1.0 + maxScale * sin(uTime * aSpeed);',
       'transformed *= scale;',

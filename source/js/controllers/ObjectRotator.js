@@ -62,6 +62,19 @@ function ObjectRotationController(object, element) {
     set:function(v) {enabled = v}
   });
 
+  Object.defineProperty(this, 'dragSpeed', {
+    get:function() {return dragSpeed},
+    set:function(v) {dragSpeed = v}
+  });
+  Object.defineProperty(this, 'autoRotateSpeed', {
+    get:function() {return autoRotateSpeed},
+    set:function(v) {autoRotateSpeed = v}
+  });
+  Object.defineProperty(this, 'damping', {
+    get:function() {return damping},
+    set:function(v) {damping = v}
+  });
+
   Object.defineProperty(this, 'rotationSpeed', {
     get:function() {return rotationSpeed}
   });

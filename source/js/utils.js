@@ -30,10 +30,29 @@ var utils = {
   ease:function(ease, t, b, c, d) {
     return b + ease.getRatio(t / d) * c;
   },
-
   applyUniformValues: function(uniforms, values) {
     for (var key in uniforms) {
       values[key] && (uniforms[key].value = values[key]);
     }
+  },
+
+  createColorController:function(gui, target, prop, name) {
+    var proxy = {};
+
+    proxy[prop] = '#' + target[prop].getHexString();
+
+    var g = gui.addColor(proxy, prop).onChange(applyColor(target, prop));
+
+    name && g.name(name);
+
+    function applyColor(target, prop) {
+      var colorObject = target[prop];
+
+      return function(color) {
+        colorObject.set(color);
+      };
+    }
+
+    return g;
   }
 };

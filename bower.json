@@ -20,5 +20,8 @@
     "three.js": "threejs#*",
     "gsap": "^1.18.2",
     "lodash": "^4.6.1"
+  },
+  "devDependencies": {
+    "dat.gui": "*"
   }
 }
