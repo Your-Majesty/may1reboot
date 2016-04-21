@@ -29,7 +29,7 @@ var Globe = function() {
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this));
-  this.loader.loadTexture('earth_data', 'res/tex/earth_lights.png');
+  this.loader.loadTexture('earth_data', 'res/tex/earth_data.png');
   this.loader.loadTexture('earth_color', 'res/tex/earth_color.jpg');
   this.loader.loadTexture('earth_disp', 'res/tex/earth_disp.jpg');
   this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
@@ -97,22 +97,22 @@ Globe.prototype = {
     var markerCnv = document.createElement('canvas');
     var markerCtx = markerCnv.getContext('2d');
 
-    markerCnv.width = markerImage.width * 0.5;
-    markerCnv.height = markerImage.height * 0.5;
+    markerCnv.width = markerImage.width;
+    markerCnv.height = markerImage.height;
     markerCtx.drawImage(markerImage, 0, 0, markerCnv.width, markerCnv.height);
 
     var elevationImage = this.loader.get('earth_disp').image;
     var elevationCnv = document.createElement('canvas');
     var elevationCtx = elevationCnv.getContext('2d');
 
-    elevationCnv.width = markerImage.width * 0.5;
-    elevationCnv.height = markerImage.height * 0.5;
+    elevationCnv.width = markerImage.width;
+    elevationCnv.height = markerImage.height;
     elevationCtx.drawImage(elevationImage, 0, 0, markerCnv.width, markerCnv.height);
 
     var markerData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
     var elevationData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
 
-    var threshold = 240;
+    var threshold = 255;
     var elevationScale = 0.125;
     var elevationOffset = 0.0;
 
@@ -121,7 +121,7 @@ Globe.prototype = {
     for (var i = 0; i < markerData.length; i+=4) {
       var r = markerData[i];
 
-      if (r > threshold) {
+      if (r >= threshold) {
         var x = ((i / 4) % markerCnv.width) / markerCnv.width;
         var y = (((i / 4) / markerCnv.width) | 0) / markerCnv.height;
         var elevation = (elevationData[i] / 255 * elevationScale) + elevationOffset;
