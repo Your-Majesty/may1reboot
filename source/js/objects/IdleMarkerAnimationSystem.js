@@ -66,7 +66,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     depthWrite: false,
     uniforms: {
       uTime: {type: 'f', value: 0},
-      uMousePosition: {type: 'v3', value: new THREE.Vector3()},
+      uPointerPosition: {type: 'v3', value: new THREE.Vector3()},
       uAttenuationDistance: {type: 'f', value: 2.0},
       uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
       uActiveColor: {type: 'c', value: new THREE.Color(0xff3f38)} //0xce6a67
@@ -76,7 +76,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     shaderParameters: [
       'uniform float uTime;',
 
-      'uniform vec3 uMousePosition;',
+      'uniform vec3 uPointerPosition;',
       'uniform float uAttenuationDistance;',
 
       'uniform vec3 uPassiveColor;',
@@ -88,7 +88,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     shaderVertexInit: [
     ],
     shaderTransformPosition: [
-      'float distance = length(transformed + aPosition - uMousePosition);',
+      'float distance = length(transformed + aPosition - uPointerPosition);',
       'float attenuation = (1.0 - min(distance / uAttenuationDistance, 1.0));',
 
       'float maxScale = max(attenuation * 4.0, 0.5);',
@@ -112,9 +112,12 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
 IdleMarkerAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
 IdleMarkerAnimationSystem.prototype.constructor = IdleMarkerAnimationSystem;
 
-IdleMarkerAnimationSystem.prototype.update = function(point) {
-  point && this.material.uniforms['uMousePosition'].value.copy(point);
+IdleMarkerAnimationSystem.prototype.update = function() {
   this.material.uniforms['uTime'].value += (1/60);
+};
+
+IdleMarkerAnimationSystem.prototype.setPointerPosition = function(point) {
+  point && this.material.uniforms['uPointerPosition'].value.copy(point);
 };
 
 Object.defineProperty(IdleMarkerAnimationSystem.prototype, 'attenuationDistance', {

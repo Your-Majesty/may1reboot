@@ -3,36 +3,37 @@ function PointerController(camera, element) {
 
   var enabled = true;
 
-  var rayCaster = new THREE.Raycaster();
-  var pointerNDC = new THREE.Vector2();
-  var pointerXY = new THREE.Vector2();
-  var intersections = [];
-  var objects = [];
+  var mRayCaster = new THREE.Raycaster();
+  var mPointerNDC = new THREE.Vector2();
+  var mPointerXY = new THREE.Vector2();
+  var mIntersections = [];
+  var mObjects = [];
 
-  var downObject = null;
+  var mDownObject = null;
+  var mHoverObject = null;
 
   function updateMouse(viewX, viewY) {
-    pointerXY.x = viewX;
-    pointerXY.y = viewY;
-    pointerNDC.x = (viewX / window.innerWidth) * 2 - 1;
-    pointerNDC.y = -(viewY / window.innerHeight) * 2 + 1;
+    mPointerXY.x = viewX;
+    mPointerXY.y = viewY;
+    mPointerNDC.x = (viewX / window.innerWidth) * 2 - 1;
+    mPointerNDC.y = -(viewY / window.innerHeight) * 2 + 1;
   }
 
   function updateIntersections() {
-    rayCaster.setFromCamera(pointerNDC, camera);
-    intersections = rayCaster.intersectObjects(objects);
+    mRayCaster.setFromCamera(mPointerNDC, camera);
+    mIntersections = mRayCaster.intersectObjects(mObjects);
 
-    return intersections;
+    return mIntersections;
   }
 
   function handlePointerDown() {
     var intersection = updateIntersections()[0];
 
     if (intersection) {
-      downObject = intersection.object;
+      mDownObject = intersection.object;
       intersection.object.dispatchEvent({
         type: 'pointer_down',
-        pointer: pointerXY.clone(),
+        pointer: mPointerXY.clone(),
         intersection: intersection
       });
     }
@@ -41,10 +42,43 @@ function PointerController(camera, element) {
   function handlePointerUp() {
     var intersection = updateIntersections()[0];
 
-    if (downObject) {
-      downObject.dispatchEvent({
+    if (mDownObject) {
+      mDownObject.dispatchEvent({
         type: 'pointer_up',
-        pointer: pointerXY.clone(),
+        pointer: mPointerXY.clone(),
+        intersection: intersection
+      });
+      mDownObject = null;
+    }
+  }
+
+  // maybe throttle this guy
+  function handlePointerMove() {
+    var intersection = updateIntersections()[0];
+
+    if (intersection && !mHoverObject) {
+      // over
+      mHoverObject = intersection.object;
+      mHoverObject.dispatchEvent({
+        type: 'pointer_over',
+        pointer: mPointerXY.clone(),
+        intersection: intersection
+      });
+    }
+    else if (!intersection && mHoverObject) {
+      // out
+      mHoverObject.dispatchEvent({
+        type: 'pointer_out',
+        pointer: mPointerXY.clone(),
+        intersection: null
+      });
+      mHoverObject = null;
+    }
+    else if (intersection) {
+      // move
+      mHoverObject.dispatchEvent({
+        type: 'pointer_move',
+        pointer: mPointerXY.clone(),
         intersection: intersection
       });
     }
@@ -60,19 +94,19 @@ function PointerController(camera, element) {
   });
   element.addEventListener('mousemove', function(e) {
     updateMouse(e.clientX, e.clientY);
+    handlePointerMove();
   });
 
   this.update = function() {
     if (!enabled) return;
-
-    updateIntersections();
+    if (mHoverObject) handlePointerMove();
   };
 
   this.register = function(object) {
-    objects.push(object);
+    mObjects.push(object);
   };
 
   Object.defineProperty(this, 'intersections', {
-    get:function() {return intersections}
+    get:function() {return mIntersections}
   });
 }
