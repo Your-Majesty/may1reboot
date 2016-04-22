@@ -15,8 +15,9 @@ var config = {
 
 var Globe = function() {
   this.root = new THREERoot({
-    createCameraControls:false,
-    fov:20
+    createCameraControls: false,
+    autoStart: false,
+    fov: 20
   });
   window.scene = this.root.scene;
 
@@ -32,7 +33,7 @@ var Globe = function() {
   this.root.add(light, 'dirLight1');
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this));
-  this.loader.loadTexture('earth_data', 'res/tex/earth_data.png');
+  this.loader.loadTexture('earth_data', 'res/tex/earth_data.jpg');
   this.loader.loadTexture('earth_color', 'res/tex/earth_color_2x.jpg');
   this.loader.loadTexture('earth_disp', 'res/tex/earth_disp.jpg');
   this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
@@ -69,6 +70,8 @@ Globe.prototype = {
     this.initPostProcessing();
 
     this.createIntroAnimation();
+
+    this.root.start();
   },
 
   initGUI:function() {
@@ -318,10 +321,6 @@ Globe.prototype = {
       searchLight.position.multiplyScalar(1.25);
     });
 
-    this.root.addUpdateCallback(function() {
-      idleAnimation.update();
-    });
-
     // DAT.GUI
 
     var folder = this.gui.addFolder('markers');
@@ -346,7 +345,7 @@ Globe.prototype = {
     tl.call(function() {
       rotationController.enabled = false;
     });
-    tl.to(this.root.renderer.domElement, 0.25, {opacity:1}, 0);
+    tl.to(this.root.renderer.domElement, 2.00, {opacity:1, ease:Circ.easeIn}, 0);
 
     tl.add(this.createCameraAnimation(10), 0.0);
     tl.add(this.createMarkersAnimation(10), 0.0);
@@ -380,6 +379,10 @@ Globe.prototype = {
       introAnimation.material.dispose();
       introAnimation.geometry.dispose();
       root.addTo(idleAnimation, 'earth');
+
+      root.addUpdateCallback(function() {
+        idleAnimation.update();
+      });
     });
 
     return tl;

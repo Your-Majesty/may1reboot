@@ -5,8 +5,8 @@ function THREERoot(params) {
     fov:60,
     zNear:1,
     zFar:10000,
-    createCameraControls:true,
-    autoUpdate:true
+    createCameraControls: true,
+    autoStart: true
   }, params);
 
   // maps and arrays
@@ -41,13 +41,18 @@ function THREERoot(params) {
   this.resize();
   window.addEventListener('resize', this.resize, false);
 
+  this.tick = _.bind(this.tick, this);
+
   // tick / update / render
-  if (params.autoUpdate) {
-    this.tick = _.bind(this.tick, this);
+  if (params.autoStart) {
     this.tick();
   }
 }
 THREERoot.prototype = {
+  start:function() {
+    this.tick();
+  },
+
   addUpdateCallback:function(callback) {
     this.updateCallbacks.push(callback);
   },
