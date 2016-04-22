@@ -53,7 +53,7 @@ function PointerController(camera, element) {
   }
 
   // maybe throttle this guy
-  function handlePointerMove() {
+  var handlePointerMove = _.throttle(function() {
     var intersection = updateIntersections()[0];
 
     if (intersection && !mHoverObject) {
@@ -82,7 +82,7 @@ function PointerController(camera, element) {
         intersection: intersection
       });
     }
-  }
+  }, 1000 / 30);
 
   element.addEventListener('mousedown', function(e) {
     updateMouse(e.clientX, e.clientY);

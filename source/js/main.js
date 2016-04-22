@@ -33,7 +33,7 @@ var Globe = function() {
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this));
   this.loader.loadTexture('earth_data', 'res/tex/earth_data.png');
-  this.loader.loadTexture('earth_color', 'res/tex/earth_color.jpg');
+  this.loader.loadTexture('earth_color', 'res/tex/earth_color_2x.jpg');
   this.loader.loadTexture('earth_disp', 'res/tex/earth_disp.jpg');
   this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
   this.loader.loadTexture('earth_spec', 'res/tex/earth_spec.jpg');
@@ -69,13 +69,12 @@ Globe.prototype = {
     this.initPostProcessing();
 
     this.createIntroAnimation();
-
   },
 
   initGUI:function() {
     var gui = this.gui = new dat.GUI();
 
-    //gui.domElement.style.visibility = 'hidden';
+    gui.domElement.style.visibility = 'hidden';
     gui.domElement.parentNode.style.zIndex = '9001';
     gui.width = 400;
     window.addEventListener('keydown', function(e) {
@@ -101,6 +100,7 @@ Globe.prototype = {
 
     fxaaPass.uniforms.resolution.value.x = 1.0 / window.innerWidth;
     fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
+    fxaaPass.enabled = false;
 
     vignettePass.uniforms.offset.value = 1.0;
     vignettePass.uniforms.darkness.value = 1.25;
@@ -253,7 +253,7 @@ Globe.prototype = {
 
   initStars:function() {
     var prefabGeometry = new THREE.TetrahedronGeometry(0.75);
-    var starSystem = new StarAnimationSystem(prefabGeometry, 8000, 100, 2000);
+    var starSystem = new StarAnimationSystem(prefabGeometry, 4000, 100, 1000);
 
     this.root.addUpdateCallback(function() {
       starSystem.update();
@@ -354,6 +354,11 @@ Globe.prototype = {
 
     tl.call(function() {
       rotationController.enabled = true;
+      //console.profile('run');
+
+      //setTimeout(function() {
+      //  console.profileEnd();
+      //}, 5000);
     });
 
     tl.timeScale(2);
@@ -372,6 +377,8 @@ Globe.prototype = {
     tl.fromTo(introAnimation, duration, {animationProgress:0}, {animationProgress:1, ease:Power0.easeIn});
     tl.call(function() {
       root.remove(introAnimation);
+      introAnimation.material.dispose();
+      introAnimation.geometry.dispose();
       root.addTo(idleAnimation, 'earth');
     });
 
