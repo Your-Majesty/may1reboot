@@ -9,7 +9,8 @@ var config = {
   earthRadius:8,
   maxAnisotropy:1,
 
-  dirBlurFactor:24
+  dirBlurFactor:24,
+  clearColor:'#101010'
 };
 
 var Globe = function() {
@@ -23,11 +24,11 @@ var Globe = function() {
 
   config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
 
-  this.root.renderer.setClearColor(0x101010);
+  this.root.renderer.setClearColor(config.clearColor);
   this.root.camera.position.y = 160;
 
   var light = new THREE.DirectionalLight(0xffffff, 1.0);
-  light.position.set(-1.0, 0.5, -0.1).normalize();
+  light.position.set(-1.0, 0.5, -0.1);
   this.root.add(light, 'dirLight1');
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this));
@@ -41,6 +42,20 @@ var Globe = function() {
   TweenMax.set(this.root.renderer.domElement, {opacity:0});
 
   console.warn = function() {}; // shhhhh!
+
+  // DAT.GUI
+
+  var folder = this.gui.addFolder('scene');
+  var root = this.root;
+
+  folder.addColor(config, 'clearColor').onChange(function(value) {
+    root.renderer.setClearColor(value);
+  });
+  utils.createColorController(folder, light, 'color', 'light color');
+  folder.add(light, 'intensity').name('light intensity');
+  folder.add(light.position, 'x').name('light origin x');
+  folder.add(light.position, 'z').name('light origin y');
+  folder.add(light.position, 'y').name('light origin z');
 };
 Globe.prototype = {
   loadedHandler:function() {
@@ -315,7 +330,11 @@ Globe.prototype = {
     folder.add(idleAnimation.material.uniforms.uScale.value, 'x').name('passive scale delta');
     folder.add(idleAnimation.material.uniforms.uScale.value, 'y').name('active scale delta');
     folder.add(interactionSettings, 'overAttenuationDistance').name('hover radius');
-    folder.add(interactionSettings, 'overAttenuationDistance').name('downAttenuationDistance radius');
+    folder.add(interactionSettings, 'downAttenuationDistance').name('down radius');
+
+    utils.createColorController(folder, searchLight, 'color', 'light color');
+    folder.add(searchLight, 'distance').name('light distance');
+    folder.add(searchLight, 'decay').name('light decay');
   },
 
   createIntroAnimation:function() {
