@@ -12,7 +12,7 @@ function PointerController(camera, element) {
   var mDownObject = null;
   var mHoverObject = null;
 
-  function updateMouse(viewX, viewY) {
+  function updatePointerPosition(viewX, viewY) {
     mPointerXY.x = viewX;
     mPointerXY.y = viewY;
     mPointerNDC.x = (viewX / window.innerWidth) * 2 - 1;
@@ -84,16 +84,38 @@ function PointerController(camera, element) {
     }
   }, 1000 / 30);
 
+  // mouse
   element.addEventListener('mousedown', function(e) {
-    updateMouse(e.clientX, e.clientY);
+    updatePointerPosition(e.clientX, e.clientY);
     handlePointerDown();
   });
   element.addEventListener('mouseup', function(e) {
-    updateMouse(e.clientX, e.clientY);
+    updatePointerPosition(e.clientX, e.clientY);
     handlePointerUp();
   });
   element.addEventListener('mousemove', function(e) {
-    updateMouse(e.clientX, e.clientY);
+    updatePointerPosition(e.clientX, e.clientY);
+    handlePointerMove();
+  });
+
+  // touch
+  element.addEventListener('touchstart', function(e) {
+    var touch = e.changedTouches[0];
+    updatePointerPosition(touch.clientX, touch.clientY);
+    handlePointerDown();
+
+    e.preventDefault();
+  });
+  element.addEventListener('touchend', function(e) {
+    var touch = e.changedTouches[0];
+    updatePointerPosition(touch.clientX, touch.clientY);
+    handlePointerUp();
+
+    e.preventDefault();
+  });
+  element.addEventListener('touchmove', function(e) {
+    var touch = e.changedTouches[0];
+    updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerMove();
   });
 
@@ -105,6 +127,12 @@ function PointerController(camera, element) {
   this.register = function(object) {
     mObjects.push(object);
   };
+
+  Object.defineProperty(this, 'isTouchDevice', {
+    get: function() {
+      return 'ontouchstart' in window || navigator.maxTouchPoints;
+    }
+  });
 
   Object.defineProperty(this, 'intersections', {
     get:function() {return mIntersections}

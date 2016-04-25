@@ -27,19 +27,20 @@ function ObjectRotationController(object, element) {
     startRotation.copy(targetRotation);
   });
 
-  element.addEventListener('mouseup', function(e) {
+  object.addEventListener('pointer_up', function(e) {
     if (!enabled) return;
 
     isDragging = false;
   });
-  element.addEventListener('mousemove', function(e) {
-    if (!enabled || !isDragging) return;
 
-    position.set(e.clientX, e.clientY).sub(center);
+  object.addEventListener('pointer_move', function(e) {
+      if (!enabled || !isDragging) return;
 
-    delta.subVectors(position, startPosition);
-    targetRotation.copy(startRotation);
-    targetRotation.addScaledVector(delta, dragSpeed);
+      position.copy(e.pointer).sub(center);
+
+      delta.subVectors(position, startPosition);
+      targetRotation.copy(startRotation);
+      targetRotation.addScaledVector(delta, dragSpeed);
   });
 
   this.update = function() {

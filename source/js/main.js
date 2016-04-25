@@ -296,36 +296,63 @@ Globe.prototype = {
       downAttenuationDistance: 6.0
     };
 
-    earth.addEventListener('pointer_down', function(e) {
-      TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.downAttenuationDistance, ease:Power2.easeOut});
-    });
+    if (this.pointerController.isTouchDevice) {
+      earth.addEventListener('pointer_down', function(e) {
+        updatePointerPosition(e.intersection.point);
+        showSearchLight();
 
-    earth.addEventListener('pointer_up', function(e) {
-      TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
-    });
+        TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.downAttenuationDistance, ease:Power2.easeOut});
+      });
 
-    earth.addEventListener('pointer_over', function(e) {
-      TweenMax.fromTo(idleAnimation, 0.5, {attenuationDistance:0.0}, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
-      TweenMax.fromTo(searchLight, 0.5, {intensity:0.0}, {intensity:1.0, ease:Power2.easeOut});
-    });
+      earth.addEventListener('pointer_up', function(e) {
+        hideSearchLight();
 
-    earth.addEventListener('pointer_out', function(e) {
-      TweenMax.to(idleAnimation, 0.5, {attenuationDistance:0.0, ease:Power2.easeOut});
-      TweenMax.to(searchLight, 0.5, {intensity:0.0, ease:Power2.easeOut});
-    });
+        TweenMax.to(idleAnimation, 1.0, {attenuationDistance: 0.0, ease:Power2.easeOut});
+      });
+    }
+    else {
+      earth.addEventListener('pointer_down', function(e) {
+        TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.downAttenuationDistance, ease:Power2.easeOut});
+      });
+
+      earth.addEventListener('pointer_up', function(e) {
+        TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
+      });
+
+      earth.addEventListener('pointer_over', function(e) {
+        showSearchLight();
+
+        TweenMax.fromTo(idleAnimation, 0.5, {attenuationDistance:0.0}, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
+      });
+
+      earth.addEventListener('pointer_out', function(e) {
+        hideSearchLight();
+
+        TweenMax.to(idleAnimation, 0.5, {attenuationDistance:0.0, ease:Power2.easeOut});
+      });
+    }
 
     earth.addEventListener('pointer_move', function(e) {
-      var point = e.intersection.point;
+      updatePointerPosition(e.intersection.point);
+    });
 
+    function updatePointerPosition(point) {
       earthMatrixInverse.identity().getInverse(earth.matrixWorld);
       point.applyMatrix4(earthMatrixInverse);
 
       idleAnimation.setPointerPosition(point);
 
-      searchLight.visible = true;
       searchLight.position.copy(point);
       searchLight.position.multiplyScalar(1.25);
-    });
+    }
+
+    function showSearchLight() {
+      TweenMax.fromTo(searchLight, 0.5, {intensity:0.0}, {intensity:1.0, ease:Power2.easeOut});
+    }
+
+    function hideSearchLight() {
+      TweenMax.to(searchLight, 0.5, {intensity:0.0, ease:Power2.easeOut});
+    }
 
     // DAT.GUI
 
