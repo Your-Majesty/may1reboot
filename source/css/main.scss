@@ -2,6 +2,17 @@ body {
   margin: 0;
 }
 
+body.three-grab #three-container {
+  cursor: -webkit-grab;
+  cursor: -moz-grab;
+  cursor: grab;
+}
+body.three-grabbing #three-container {
+  cursor: -webkit-grabbing;
+  cursor: -moz-grabbing;
+  cursor: grabbing;
+}
+
 .globe {
   overflow: hidden;
   background: #0f0f0f;

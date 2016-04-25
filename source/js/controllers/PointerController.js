@@ -64,6 +64,8 @@ function PointerController(camera, element) {
         pointer: mPointerXY.clone(),
         intersection: intersection
       });
+
+      updateCursor();
     }
     else if (!intersection && mHoverObject) {
       // out
@@ -73,6 +75,8 @@ function PointerController(camera, element) {
         intersection: null
       });
       mHoverObject = null;
+
+      updateCursor();
     }
     else if (intersection) {
       // move
@@ -81,8 +85,30 @@ function PointerController(camera, element) {
         pointer: mPointerXY.clone(),
         intersection: intersection
       });
+
+      updateCursor();
     }
   }, 1000 / 30);
+
+  var mCursorBodyClass = '';
+
+  function updateCursor() {
+    if (mHoverObject) {
+      mCursorBodyClass && document.body.classList.remove(mCursorBodyClass);
+
+      if (mDownObject) {
+        mCursorBodyClass = 'three-grabbing';
+      }
+      else {
+        mCursorBodyClass = 'three-grab';
+      }
+
+      document.body.classList.add(mCursorBodyClass);
+    }
+    else if (mCursorBodyClass) {
+      document.body.classList.remove(mCursorBodyClass);
+    }
+  }
 
   // mouse
   element.addEventListener('mousedown', function(e) {
