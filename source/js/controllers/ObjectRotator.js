@@ -12,7 +12,7 @@ function ObjectRotationController(object, element) {
   var delta = new THREE.Vector2();
   var rotationSpeed = new THREE.Vector2();
 
-  var dragSpeed = 0.0025;
+  var dragSpeed = 0.0035;
   var autoRotateSpeed = -0.0025;
   var damping = 0.05;
   var vMin = -Math.PI * 0.5;

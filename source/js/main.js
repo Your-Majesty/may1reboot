@@ -226,7 +226,7 @@ Globe.prototype = {
 
     halo.scale.setScalar(1.125);
 
-    TweenMax.to(halo.rotation, 48, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+    TweenMax.to(halo.rotation, 48, {y:-Math.PI * 2, ease:Power0.easeIn, repeat:-1});
 
     earth.add(halo);
 
