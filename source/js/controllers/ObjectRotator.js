@@ -44,6 +44,8 @@ function ObjectRotationController(object, element) {
   });
 
   this.update = function() {
+    if (!enabled) return;
+
     if (!isDragging) {
       targetRotation.x += autoRotateSpeed;
     }

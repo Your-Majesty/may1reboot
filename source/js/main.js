@@ -40,8 +40,6 @@ var Globe = function() {
   this.loader.loadTexture('earth_spec', 'res/tex/earth_spec.jpg');
   this.loader.loadTexture('cloud_alpha_map', 'res/tex/earth_cld_alpha.jpg');
 
-  TweenMax.set(this.root.renderer.domElement, {opacity:0});
-
   console.warn = function() {}; // shhhhh!
 
   // DAT.GUI
@@ -372,26 +370,24 @@ Globe.prototype = {
   createIntroAnimation:function() {
     var rotationController = this.earthRotationController;
     var vignettePass = this.vignettePass;
+    var preloader = document.querySelector('#preloader');
 
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
       rotationController.enabled = false;
     });
+    tl.to(preloader, 1.00, {opacity:0, ease:Power1.easeIn}, 0);
+    tl.set(preloader, {display:'none'}, 1.0);
     tl.to(this.root.renderer.domElement, 2.00, {opacity:1, ease:Circ.easeIn}, 0);
 
-    tl.add(this.createCameraAnimation(10), 0.0);
-    tl.add(this.createMarkersAnimation(10), 0.0);
-    tl.fromTo(vignettePass.uniforms.offset, 10, {value:0}, {value:1.0}, 0);
+    tl.add(this.createCameraAnimation(11), 0.0);
+    tl.add(this.createMarkersAnimation(10), 1.0);
+    tl.fromTo(vignettePass.uniforms.offset, 10, {value:0}, {value:1.0}, 1.0);
 
-    tl.call(function() {
+    tl.add(function() {
       rotationController.enabled = true;
-      //console.profile('run');
-
-      //setTimeout(function() {
-      //  console.profileEnd();
-      //}, 5000);
-    });
+    }, '-=2.0');
 
     tl.timeScale(2);
   },
@@ -430,18 +426,20 @@ Globe.prototype = {
     var camera = this.root.camera;
     var target = new THREE.Vector3(0, eyeHeight, 0);
 
-    var tl = new TimelineMax({
-      onUpdate:function() {
-        var x = Math.cos(proxy.angle) * proxy.distance;
-        var y = proxy.eyeHeight;
-        var z = Math.sin(proxy.angle) * proxy.distance;
+    function update() {
+      var x = Math.cos(proxy.angle) * proxy.distance;
+      var y = proxy.eyeHeight;
+      var z = Math.sin(proxy.angle) * proxy.distance;
 
-        camera.position.set(x, y, z);
-        camera.lookAt(target);
-      }
-    });
+      camera.position.set(x, y, z);
+      camera.lookAt(target);
+    }
+
+    var tl = new TimelineMax({onUpdate: update});
 
     tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, eyeHeight:eyeHeight, ease:Power1.easeInOut});
+
+    update();
 
     return tl;
   },
