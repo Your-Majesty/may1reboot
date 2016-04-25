@@ -215,7 +215,7 @@ Globe.prototype = {
       })
     );
     var halo = new THREE.Mesh(
-      new THREE.SphereGeometry(config.earthRadius + 1.0, 100, 100),
+      new THREE.SphereGeometry(config.earthRadius, 100, 100),
       new AtmosphereMaterial({
         alphaMap: this.loader.get('cloud_alpha_map'),
         color: 0xAFD2E4,
@@ -223,6 +223,8 @@ Globe.prototype = {
         coefficient: 0.8
       })
     );
+
+    halo.scale.setScalar(1.125);
 
     TweenMax.to(halo.rotation, 48, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
 
@@ -243,6 +245,10 @@ Globe.prototype = {
     utils.createColorController(earthFolder, earth.material, 'emissive', 'earth emissive');
     utils.createColorController(earthFolder, earth.material, 'specular', 'earth specular');
     earthFolder.add(earth.material, 'shininess').name('specular focus');
+
+    earthFolder.add(halo.scale, 'x').name('atmosphere scale').onChange(function(v) {
+      halo.scale.setScalar(v);
+    });
 
     utils.createColorController(earthFolder, halo.material.uniforms.glowColor, 'value', 'atmosphere color');
     earthFolder.add(halo.material.uniforms.coefficient, 'value').name('atmosphere coefficient');
