@@ -93,9 +93,11 @@ function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
   var endColor = new THREE.Color();
 
   startColor.set(0x000000);
-  endColor.set(0xd50c05);
+
+  var hsl = endColor.set(0xd50c05).getHSL();
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
+    endColor.setHSL(hsl.h, THREE.Math.randFloat(0.5, 1.0), THREE.Math.randFloat(0.2, 0.5));
 
     for (j = 0; j < prefabVertexCount; j++) {
       aStartColor.array[offset  ] = startColor.r;

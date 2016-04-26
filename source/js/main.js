@@ -167,8 +167,8 @@ Globe.prototype = {
     var elevationData = elevationCtx.getImageData(0, 0, elevationCnv.width, elevationCnv.height).data;
 
     var threshold = 255;
-    var elevationScale = 0.55;
-    var elevationOffset = 0.05;
+    var elevationScale = 0.4;
+    var elevationOffset = 0.2;
 
     var positions = [];
 
@@ -303,9 +303,9 @@ Globe.prototype = {
   },
 
   initMarkers:function() {
-    var prefabGeometry = new THREE.SphereGeometry(0.025, 8, 6);
+    var prefabGeometry = new THREE.SphereGeometry(0.04, 8, 6);
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
-    var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
+    var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions, introAnimation.geometry.attributes.color.array);
 
     var earth = this.root.get('earth');
     var halo = this.root.get('halo');

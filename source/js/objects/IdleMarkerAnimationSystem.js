@@ -1,4 +1,4 @@
-function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
+function IdleMarkerAnimationSystem(prefabGeometry, endPositions, colorsArray) {
   var prefabCount = endPositions.length;
   var prefabVertexCount = prefabGeometry.vertices.length;
   var bufferGeometry = new THREE.BAS.PrefabBufferGeometry(prefabGeometry, prefabCount);
@@ -10,7 +10,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
   var speed;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    speed = THREE.Math.randFloat(1.0, 4.0);
+    speed = THREE.Math.randFloat(1.0, 3.0);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aSpeed.array[offset++] = speed;
@@ -33,30 +33,18 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
     }
   }
 
-  // colors
-  //var aStartColor = bufferGeometry.createAttribute('aStartColor', 3);
-  //var color = bufferGeometry.createAttribute('color', 3); // end color
-  //
-  //var startColor = new THREE.Color();
-  //var endColor = new THREE.Color();
-  //
-  //startColor.set(0x000000);
-  //endColor.set(0xd50c05);
-  //
-  //for (i = 0, offset = 0; i < prefabCount; i++) {
-  //
-  //  for (j = 0; j < prefabVertexCount; j++) {
-  //    aStartColor.array[offset  ] = startColor.r;
-  //    aStartColor.array[offset+1] = startColor.g;
-  //    aStartColor.array[offset+2] = startColor.b;
-  //
-  //    color.array[offset  ] = endColor.r;
-  //    color.array[offset+1] = endColor.g;
-  //    color.array[offset+2] = endColor.b;
-  //
-  //    offset += 3;
-  //  }
-  //}
+  // colors (copied from intro animation)
+  var color = bufferGeometry.createAttribute('color', 3); // end color
+
+  for (i = 0, offset = 0; i < prefabCount; i++) {
+    for (j = 0; j < prefabVertexCount; j++) {
+      color.array[offset  ] = colorsArray[offset  ];
+      color.array[offset+1] = colorsArray[offset+1];
+      color.array[offset+2] = colorsArray[offset+2];
+
+      offset += 3;
+    }
+  }
 
   var material = new THREE.BAS.BasicAnimationMaterial({
     transparent: true,
@@ -69,7 +57,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
       uPointerPosition: {type: 'v3', value: new THREE.Vector3()},
 
       uAttenuationDistance: {type: 'f', value: 2.0},
-      uScale: {type: 'v2', value: new THREE.Vector2(0.5, 4.0)}, // min/max
+      uScale: {type: 'v2', value: new THREE.Vector2(0.5, 3.0)}, // min/max
       uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
       uActiveColor: {type: 'c', value: new THREE.Color(0xff3f38)} //0xce6a67
     },
@@ -82,7 +70,6 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
       'uniform float uAttenuationDistance;',
       'uniform vec2 uScale;',
 
-      'uniform vec3 uPassiveColor;',
       'uniform vec3 uActiveColor;',
 
       'attribute float aSpeed;',
@@ -96,12 +83,12 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions) {
 
       'float maxScale = max(attenuation * uScale.y, uScale.x);',
 
-      'float scale = 1.0 + maxScale * sin(uTime * aSpeed);',
+      'float scale = 1.0 + maxScale * abs(sin(uTime * aSpeed));',
       'transformed *= scale;',
 
       'transformed += aPosition;',
 
-      'vColor = mix(uPassiveColor, uActiveColor, attenuation);'
+      'vColor = mix(color, uActiveColor, attenuation);'
     ]
   },
   {
