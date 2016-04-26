@@ -9,8 +9,8 @@ var config = {
   earthRadius:8,
   maxAnisotropy:1,
 
-  dirBlurFactor:24,
-  clearColor:'#101010'
+  dirBlurFactor:36,
+  clearColor:'#090909'
 };
 
 var Globe = function(textureRoot) {
@@ -81,7 +81,7 @@ Globe.prototype = {
   initGUI:function() {
     var gui = this.gui = new dat.GUI();
 
-    gui.domElement.style.visibility = 'hidden';
+    //gui.domElement.style.visibility = 'hidden';
     gui.domElement.parentNode.style.zIndex = '9001';
     gui.width = 400;
     window.addEventListener('keydown', function(e) {
@@ -109,9 +109,10 @@ Globe.prototype = {
     fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
     fxaaPass.enabled = false;
 
-    vignettePass.uniforms.offset.value = 1.0;
+    vignettePass.uniforms.offset.value = 0.0;
     vignettePass.uniforms.darkness.value = 1.25;
-    vignettePass.uniforms.centerOffset.value.y = 0.3;
+    vignettePass.uniforms.centerOffset.value.y = -0.225;
+    //vignettePass.enabled = false;
 
     this.vignettePass = vignettePass;
 
@@ -166,8 +167,8 @@ Globe.prototype = {
     var elevationData = elevationCtx.getImageData(0, 0, elevationCnv.width, elevationCnv.height).data;
 
     var threshold = 255;
-    var elevationScale = 0.4;
-    var elevationOffset = 0.1;
+    var elevationScale = 0.55;
+    var elevationOffset = 0.05;
 
     var positions = [];
 
@@ -207,7 +208,7 @@ Globe.prototype = {
         map: this.loader.get('earth_color'),
 
         displacementMap: this.loader.get('earth_disp'),
-        displacementScale: 0.4,
+        displacementScale: 0.55,
         displacementBias: -0.10,
 
         bumpMap: this.loader.get('earth_bump'),
@@ -230,11 +231,12 @@ Globe.prototype = {
 
     halo.scale.setScalar(1.125);
 
-    TweenMax.to(halo.rotation, 48, {y:-Math.PI * 2, ease:Power0.easeIn, repeat:-1});
+    TweenMax.to(halo.scale, 6, {x:1.175, y:1.175, z: 1.175, ease:Power1.easeInOut, repeat:-1, yoyo:true});
 
-    earth.add(halo);
+    halo.rotationAnimation = TweenMax.to(halo.rotation, 16, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
 
     this.root.add(earth, 'earth');
+    this.root.addTo(halo, 'earth', 'halo');
     this.pointerController.register(earth);
 
     this.earthRotationController = new ObjectRotationController(earth);
@@ -265,11 +267,28 @@ Globe.prototype = {
   },
 
   initStars:function() {
-    var prefabGeometry = new THREE.TetrahedronGeometry(0.75);
-    var starSystem = new StarAnimationSystem(prefabGeometry, 4000, 100, 1000);
+    //var prefabGeometry = new THREE.TetrahedronGeometry(0.5);
+    var prefabGeometry = new THREE.Geometry();
+    prefabGeometry.vertices.push(new THREE.Vector3(-1,  1, 0));
+    prefabGeometry.vertices.push(new THREE.Vector3( 1, -1, 0));
+    prefabGeometry.vertices.push(new THREE.Vector3(-1, -1, 0));
+    prefabGeometry.faces.push( new THREE.Face3(0, 1, 2));
+
+    var mat = new THREE.Matrix4();
+    var scl = 0.75;
+    mat.multiply(new THREE.Matrix4().makeTranslation(0.5, 0.5, 0));
+    mat.multiply(new THREE.Matrix4().makeScale(scl, scl, scl));
+
+    prefabGeometry.applyMatrix(mat);
+
+    var starSystem = new StarAnimationSystem(prefabGeometry, 25000, 400, 1400);
+    starSystem.material.emissive.set(0x121212);
+    var earthRotationController = this.earthRotationController;
 
     this.root.addUpdateCallback(function() {
       starSystem.update();
+      starSystem.rotation.y -= earthRotationController.rotationSpeed.y * 1.25;
+      //console.log(earthRotationController.rotationSpeed);
     });
 
     this.root.addTo(starSystem, 'earth');
@@ -288,8 +307,8 @@ Globe.prototype = {
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions);
 
-    //var pointerController = this.pointerController;
     var earth = this.root.get('earth');
+    var halo = this.root.get('halo');
     var earthMatrixInverse = new THREE.Matrix4();
 
     var searchLight = new THREE.PointLight(0xffffff, 0.0, 8.0, 2.0);
@@ -316,10 +335,12 @@ Globe.prototype = {
     }
     else {
       earth.addEventListener('pointer_down', function(e) {
+        TweenMax.to(halo.rotationAnimation, 1.0, {timeScale:0.25});
         TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.downAttenuationDistance, ease:Power2.easeOut});
       });
 
       earth.addEventListener('pointer_up', function(e) {
+        TweenMax.to(halo.rotationAnimation, 1.0, {timeScale:1.0});
         TweenMax.to(idleAnimation, 1.0, {attenuationDistance: interactionSettings.overAttenuationDistance, ease:Power2.easeOut});
       });
 
@@ -395,7 +416,7 @@ Globe.prototype = {
 
     tl.add(this.createCameraAnimation(11), 0.0);
     tl.add(this.createMarkersAnimation(10), 1.0);
-    tl.fromTo(vignettePass.uniforms.offset, 10, {value:0}, {value:1.0}, 1.0);
+    tl.from(vignettePass.uniforms.offset, 11, {value:0}, 0.0);
 
     tl.add(function() {
       rotationController.enabled = true;

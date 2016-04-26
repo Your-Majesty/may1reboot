@@ -9,7 +9,9 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
   var position = new THREE.Vector3();
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    utils.randomSpherical(clear, spread, position);
+    //utils.randomSpherical(clear, spread, position);
+
+    position = utils.fibSpherePoint(i, prefabCount, THREE.Math.randFloat(clear, spread));
 
     for (j = 0; j < prefabVertexCount; j++) {
       aPosition.array[offset  ] = position.x;
@@ -45,6 +47,7 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
 
   var material = new THREE.BAS.PhongAnimationMaterial({
       shading: THREE.FlatShading,
+      side: THREE.DoubleSide,
       uniforms: {
         uTime: {type: 'f', value: 0}
       },
