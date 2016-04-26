@@ -163,11 +163,11 @@ Globe.prototype = {
     elevationCtx.drawImage(elevationImage, 0, 0, markerCnv.width, markerCnv.height);
 
     var markerData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
-    var elevationData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
+    var elevationData = elevationCtx.getImageData(0, 0, elevationCnv.width, elevationCnv.height).data;
 
     var threshold = 255;
-    var elevationScale = 0.125;
-    var elevationOffset = 0.0;
+    var elevationScale = 0.4;
+    var elevationOffset = 0.1;
 
     var positions = [];
 
