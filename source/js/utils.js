@@ -54,5 +54,11 @@ var utils = {
     }
 
     return g;
+  },
+
+  isElementInViewport: function(el) {
+    var rect = el.getBoundingClientRect();
+
+    return (rect.bottom >= 0);
   }
 };

@@ -88,8 +88,11 @@ THREERoot.prototype = {
   },
 
   tick: function() {
-    this.update();
-    this.render();
+    if (utils.isElementInViewport(this.renderer.domElement)) {
+      this.update();
+      this.render();
+    }
+
     requestAnimationFrame(this.tick);
   },
   update: function() {
