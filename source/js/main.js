@@ -13,7 +13,7 @@ var config = {
   clearColor:'#101010'
 };
 
-var Globe = function() {
+var Globe = function(textureRoot) {
   this.root = new THREERoot({
     createCameraControls: false,
     autoStart: false,
@@ -32,15 +32,17 @@ var Globe = function() {
   light.position.set(-1.0, 0.5, -0.1);
   this.root.add(light, 'dirLight1');
 
-  this.loader = new THREELoader(_.bind(this.loadedHandler, this));
-  this.loader.loadTexture('earth_data', 'res/tex/earth_data.jpg');
-  this.loader.loadTexture('earth_color', 'res/tex/earth_color_2x.jpg');
-  this.loader.loadTexture('earth_disp', 'res/tex/earth_disp.jpg');
-  this.loader.loadTexture('earth_bump', 'res/tex/earth_bump.png');
-  this.loader.loadTexture('earth_spec', 'res/tex/earth_spec.jpg');
-  this.loader.loadTexture('cloud_alpha_map', 'res/tex/earth_cld_alpha.jpg');
+  this.loader = new THREELoader(_.bind(this.loadedHandler, this), textureRoot);
+  this.loader.loadTexture('earth_data', 'earth_data.jpg');
+  this.loader.loadTexture('earth_color', 'earth_color_2x.jpg');
+  this.loader.loadTexture('earth_disp', 'earth_disp.jpg');
+  this.loader.loadTexture('earth_bump', 'earth_bump.png');
+  this.loader.loadTexture('earth_spec', 'earth_spec.jpg');
+  this.loader.loadTexture('cloud_alpha_map', 'earth_cld_alpha.jpg');
 
   console.warn = function() {}; // shhhhh!
+
+  this.eventDispatcher = new THREE.EventDispatcher();
 
   // DAT.GUI
 
@@ -57,6 +59,10 @@ var Globe = function() {
   folder.add(light.position, 'y').name('light origin z');
 };
 Globe.prototype = {
+  addEventListener:function(type, handler) {
+    this.eventDispatcher.addEventListener(type, handler);
+  },
+
   loadedHandler:function() {
     this.pointerController = new PointerController(this.root.camera);
     this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));
@@ -371,14 +377,20 @@ Globe.prototype = {
     var rotationController = this.earthRotationController;
     var vignettePass = this.vignettePass;
     var preloader = document.querySelector('#preloader');
+    var eventDispatcher = this.eventDispatcher;
 
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
       rotationController.enabled = false;
+      eventDispatcher.dispatchEvent({type:'preloader_hide_start'});
     });
     tl.to(preloader, 1.00, {opacity:0, ease:Power1.easeIn}, 0);
     tl.set(preloader, {display:'none'}, 1.0);
+    tl.add(function() {
+      eventDispatcher.dispatchEvent({type:'preloader_hide_complete'});
+    }, 1.00);
+
     tl.to(this.root.renderer.domElement, 2.00, {opacity:1, ease:Circ.easeIn}, 0);
 
     tl.add(this.createCameraAnimation(11), 0.0);
@@ -387,7 +399,7 @@ Globe.prototype = {
 
     tl.add(function() {
       rotationController.enabled = true;
-    }, '-=2.0');
+    }, '-=1.0');
 
     tl.timeScale(2);
   },
@@ -450,8 +462,6 @@ Globe.prototype = {
     this.root.objects['earth'].material.map.anisotropy = config.maxAnisotropy;
   },
 };
-
-window.globe = new Globe();
 
 // drag and drop texture stuff
 'drag dragstart dragend dragover dragenter dragleave drop'.split(' ').forEach(function(ev) {
