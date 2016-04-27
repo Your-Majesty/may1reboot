@@ -10,7 +10,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions, colorsArray) {
   var speed;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    speed = THREE.Math.randFloat(1.0, 3.0);
+    speed = THREE.Math.randFloat(1.0, 2.5);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aSpeed.array[offset++] = speed;
@@ -57,7 +57,7 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions, colorsArray) {
       uPointerPosition: {type: 'v3', value: new THREE.Vector3()},
 
       uAttenuationDistance: {type: 'f', value: 2.0},
-      uScale: {type: 'v2', value: new THREE.Vector2(0.5, 3.0)}, // min/max
+      uScale: {type: 'v2', value: new THREE.Vector2(1.0, 4.0)}, // min/max
       uPassiveColor: {type: 'c', value: new THREE.Color(0xd50c05)},
       uActiveColor: {type: 'c', value: new THREE.Color(0xff3f38)} //0xce6a67
     },

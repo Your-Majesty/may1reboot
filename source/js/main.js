@@ -316,7 +316,7 @@ Globe.prototype = {
 
     var interactionSettings = {
       overAttenuationDistance: 2.0,
-      downAttenuationDistance: 6.0
+      downAttenuationDistance: 4.0
     };
 
     if (this.pointerController.isTouchDevice) {
