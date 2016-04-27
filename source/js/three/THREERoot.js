@@ -81,7 +81,7 @@ THREERoot.prototype = {
       object = o;
     }
 
-    if (object) {
+    if (object && object.parent) {
       object.parent.remove(object);
       delete this.objects[o];
     }

@@ -281,8 +281,10 @@ Globe.prototype = {
 
     prefabGeometry.applyMatrix(mat);
 
-    var starSystem = new StarAnimationSystem(prefabGeometry, 25000, 400, 1400);
-    starSystem.material.emissive.set(0x121212);
+    var starSystem = new StarAnimationSystem(prefabGeometry, 20000, 400, 1400);
+    starSystem.material.emissive.set(config.clearColor);
+    this.root.addTo(starSystem, 'earth');
+
     var earthRotationController = this.earthRotationController;
 
     this.root.addUpdateCallback(function() {
@@ -290,8 +292,6 @@ Globe.prototype = {
       starSystem.rotation.y -= earthRotationController.rotationSpeed.y * 1.25;
       //console.log(earthRotationController.rotationSpeed);
     });
-
-    this.root.addTo(starSystem, 'earth');
 
     // DAT.GUI
 
@@ -303,7 +303,7 @@ Globe.prototype = {
   },
 
   initMarkers:function() {
-    var prefabGeometry = new THREE.SphereGeometry(0.04, 8, 6);
+    var prefabGeometry = new THREE.SphereGeometry(0.03, 8, 6);
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions, introAnimation.geometry.attributes.color.array);
 
@@ -411,6 +411,7 @@ Globe.prototype = {
     tl.add(function() {
       eventDispatcher.dispatchEvent({type:'preloader_hide_complete'});
     }, 1.00);
+    tl.add('preloader_hide_complete');
 
     tl.to(this.root.renderer.domElement, 2.00, {opacity:1, ease:Circ.easeIn}, 0);
 
@@ -423,6 +424,15 @@ Globe.prototype = {
     }, '-=1.0');
 
     tl.timeScale(2);
+
+    // gui
+    var ctrl = {
+      replay:function() {
+        tl.play('preloader_hide_complete');
+      }
+    };
+
+    this.gui.add(ctrl, 'replay').name('replay intro');
   },
 
   createMarkersAnimation:function(duration) {
@@ -433,13 +443,14 @@ Globe.prototype = {
     var root = this.root;
 
     tl.call(function() {
+      root.remove(introAnimation);
+      root.remove(idleAnimation);
+
       root.addTo(introAnimation, 'earth');
     });
     tl.fromTo(introAnimation, duration, {animationProgress:0}, {animationProgress:1, ease:Power0.easeIn});
     tl.call(function() {
       root.remove(introAnimation);
-      introAnimation.material.dispose();
-      introAnimation.geometry.dispose();
       root.addTo(idleAnimation, 'earth');
 
       root.addUpdateCallback(function() {
