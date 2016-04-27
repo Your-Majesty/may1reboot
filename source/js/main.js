@@ -9,8 +9,8 @@ var config = {
   earthRadius:8,
   maxAnisotropy:1,
 
-  dirBlurFactor:36,
-  clearColor:'#090909'
+  dirBlurFactor:24,
+  clearColor:'#000000'
 };
 
 var Globe = function(textureRoot) {
@@ -28,7 +28,7 @@ var Globe = function(textureRoot) {
   this.root.renderer.setClearColor(config.clearColor);
   this.root.camera.position.y = 160;
 
-  var light = new THREE.DirectionalLight(0xffffff, 1.0);
+  var light = new THREE.DirectionalLight(0xffffff, 2.0);
   light.position.set(-1.0, 0.5, -0.1);
   this.root.add(light, 'dirLight1');
 
@@ -115,7 +115,8 @@ Globe.prototype = {
     vignettePass.uniforms.offset.value = 0.0;
     vignettePass.uniforms.darkness.value = 1.25;
     vignettePass.uniforms.centerOffset.value.y = -0.225;
-    //vignettePass.enabled = false;
+
+    bloomPass.enabled = false;
 
     this.vignettePass = vignettePass;
 
@@ -129,7 +130,16 @@ Globe.prototype = {
 
     this.root.addUpdateCallback(_.bind(function() {
       var rs = this.earthRotationController.rotationSpeed;
-      hBlurPass.uniforms.strength.value = Math.abs(rs.y) * config.dirBlurFactor;
+      var v = Math.abs(rs.y) * config.dirBlurFactor;
+
+      if (v >= 1.0) {
+        hBlurPass.enabled = true;
+        hBlurPass.uniforms.strength.value = v;
+      }
+      else {
+        hBlurPass.enabled = false;
+      }
+
     }, this));
 
     this.root.addResizeCallback(function() {
@@ -145,8 +155,9 @@ Globe.prototype = {
     folder.add(vignettePass.uniforms.offset, 'value').name('vignette offset');
     folder.add(vignettePass.uniforms.darkness, 'value').name('vignette darkness');
     folder.add(vignettePass.uniforms.centerOffset.value, 'y').name('vignette center offset');
-    folder.add(bloomPass.copyUniforms.opacity, 'value').name('bloom strenght');
+    folder.add(bloomPass.copyUniforms.opacity, 'value').name('bloom strength');
     folder.add(fxaaPass, 'enabled').name('enable fxaa');
+    folder.add(bloomPass, 'enabled').name('enable bloom');
   },
 
   processMarkerPositions:function() {
@@ -218,7 +229,7 @@ Globe.prototype = {
         bumpScale: 0.1,
 
         specularMap: this.loader.get('earth_spec'),
-        specular: 0x666666,
+        specular: 0x878787,
         shininess: 1.0
       })
     );
@@ -278,15 +289,15 @@ Globe.prototype = {
     prefabGeometry.faces.push( new THREE.Face3(0, 1, 2));
 
     var mat = new THREE.Matrix4();
-    var scl = 0.75;
+    var scl = 0.5;
     mat.multiply(new THREE.Matrix4().makeTranslation(0.5, 0.5, 0));
     mat.multiply(new THREE.Matrix4().makeScale(scl, scl, scl));
 
     prefabGeometry.applyMatrix(mat);
 
-    var starSystem = new StarAnimationSystem(prefabGeometry, 20000, 400, 1400);
-    starSystem.material.emissive.set(config.clearColor);
-    this.root.addTo(starSystem, 'earth');
+    var starSystem = new StarAnimationSystem(prefabGeometry, 80000, 400, 1400);
+    //starSystem.material.emissive.set(config.clearColor);
+    this.root.addTo(starSystem, 'earth', 'stars');
 
     var earthRotationController = this.earthRotationController;
 
@@ -295,6 +306,22 @@ Globe.prototype = {
       starSystem.rotation.y -= earthRotationController.rotationSpeed.y * 1.25;
       //console.log(earthRotationController.rotationSpeed);
     });
+
+
+    //var l = new THREE.DirectionalLight();
+    //l.position.set(0, 0, 1);
+    //l.
+
+    //var starsBG = new THREE.Mesh(
+    //  new THREE.SphereGeometry(1400, 200, 200, 0, Math.PI * 2, Math.PI * 0.3, Math.PI * 0.4),
+    //  //new THREE.SphereGeometry(1500, 200, 200),
+    //  new THREE.MeshBasicMaterial({
+    //    side: THREE.BackSide,
+    //    map: this.loader.get('stars')
+    //  })
+    //);
+    //
+    //this.root.addTo(starsBG, 'stars');
 
     // DAT.GUI
 
@@ -318,7 +345,7 @@ Globe.prototype = {
   },
 
   initMarkers:function() {
-    var prefabGeometry = new THREE.SphereGeometry(0.03, 8, 6);
+    var prefabGeometry = new THREE.SphereGeometry(0.015, 8, 6);
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions, introAnimation.geometry.attributes.color.array);
 
@@ -391,7 +418,7 @@ Globe.prototype = {
     }
 
     function showSearchLight() {
-      TweenMax.fromTo(searchLight, 0.5, {intensity:0.0}, {intensity:1.0, ease:Power2.easeOut});
+      TweenMax.fromTo(searchLight, 0.5, {intensity:0.0}, {intensity:2.0, ease:Power2.easeOut});
     }
 
     function hideSearchLight() {
@@ -480,7 +507,7 @@ Globe.prototype = {
   },
   createCameraAnimation:function(duration) {
     var proxy = {
-      angle:Math.PI * 1.5,
+      angle:Math.PI * -3.5,
       distance:400,
       eyeHeight:60
     };

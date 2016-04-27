@@ -70,7 +70,8 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     },
     {
       diffuse: 0xffffff,
-      specular: 0x000000,
+      specular: 0xffffff,
+      emissive: 0x333333,
       shininess: 40
     });
 
