@@ -15,7 +15,7 @@ var config = {
 
 var Globe = function(textureRoot) {
   this.root = new THREERoot({
-    createCameraControls: false,
+    createCameraControls: !true,
     autoStart: false,
     fov: 20
   });
@@ -68,10 +68,12 @@ Globe.prototype = {
     this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));
 
     this.processMarkerPositions();
+
     this.initEarth();
     this.initStars();
     this.initMarkers();
     this.initAsteroids();
+
     this.initPostProcessing();
 
     this.createIntroAnimation();
@@ -304,7 +306,15 @@ Globe.prototype = {
   },
 
   initAsteroids:function() {
+    var prefabGeometry = new THREE.TetrahedronGeometry(2.0);
 
+    var asteroidSystem = new AsteroidAnimationSystem(prefabGeometry, 100, 50, 200);
+
+    this.root.add(asteroidSystem);
+
+    this.root.addUpdateCallback(function() {
+      asteroidSystem.update();
+    });
   },
 
   initMarkers:function() {
@@ -393,8 +403,9 @@ Globe.prototype = {
     var folder = this.gui.addFolder('markers');
     utils.createColorController(folder, idleAnimation.material.uniforms.uPassiveColor, 'value', 'passive color');
     utils.createColorController(folder, idleAnimation.material.uniforms.uActiveColor, 'value', 'active color');
-    folder.add(idleAnimation.material.uniforms.uScale.value, 'x').name('passive scale delta');
-    folder.add(idleAnimation.material.uniforms.uScale.value, 'y').name('active scale delta');
+    folder.add(idleAnimation.material.uniforms.uScale.value, 'x').name('scale');
+    folder.add(idleAnimation.material.uniforms.uScale.value, 'y').name('passive scale delta');
+    folder.add(idleAnimation.material.uniforms.uScale.value, 'z').name('active scale delta');
     folder.add(interactionSettings, 'overAttenuationDistance').name('hover radius');
     folder.add(interactionSettings, 'downAttenuationDistance').name('down radius');
 
