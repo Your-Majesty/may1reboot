@@ -71,6 +71,7 @@ Globe.prototype = {
     this.initEarth();
     this.initStars();
     this.initMarkers();
+    this.initAsteroids();
     this.initPostProcessing();
 
     this.createIntroAnimation();
@@ -302,6 +303,10 @@ Globe.prototype = {
     folder.add(starSystem.material, 'shininess').name('specular focus');
   },
 
+  initAsteroids:function() {
+
+  },
+
   initMarkers:function() {
     var prefabGeometry = new THREE.SphereGeometry(0.03, 8, 6);
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
@@ -313,6 +318,10 @@ Globe.prototype = {
 
     var searchLight = new THREE.PointLight(0xffffff, 0.0, 8.0, 2.0);
     this.root.addTo(searchLight, 'earth');
+
+    this.root.addUpdateCallback(function() {
+      idleAnimation.update();
+    });
 
     var interactionSettings = {
       overAttenuationDistance: 2.0,
@@ -453,9 +462,7 @@ Globe.prototype = {
       root.remove(introAnimation);
       root.addTo(idleAnimation, 'earth');
 
-      root.addUpdateCallback(function() {
-        idleAnimation.update();
-      });
+      idleAnimation.resetIdleAnimation();
     });
 
     return tl;

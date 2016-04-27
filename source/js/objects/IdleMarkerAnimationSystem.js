@@ -92,18 +92,25 @@ function IdleMarkerAnimationSystem(prefabGeometry, endPositions, colorsArray) {
     ]
   },
   {
-    opacity:1.0
+    opacity: 1.0
   });
 
   THREE.Mesh.call(this, bufferGeometry, material);
 
   this.frustumCulled = false;
+  this.idleAnimationEnabled = true;
 }
 IdleMarkerAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
 IdleMarkerAnimationSystem.prototype.constructor = IdleMarkerAnimationSystem;
 
+IdleMarkerAnimationSystem.prototype.resetIdleAnimation = function() {
+  this.material.uniforms['uTime'].value = 0;
+};
+
 IdleMarkerAnimationSystem.prototype.update = function() {
-  this.material.uniforms['uTime'].value += (1/60);
+  if (this.idleAnimationEnabled) {
+    this.material.uniforms['uTime'].value += (1/60);
+  }
 };
 
 IdleMarkerAnimationSystem.prototype.setPointerPosition = function(point) {
