@@ -66,9 +66,23 @@ var utils = {
       return vec;
     }
   })(),
+  spherePointEven: (function() {
+    var vec = {};
 
+    return function (){
+      var u = Math.random();
+      var v = Math.random();
 
+      var theta = 2 * Math.PI * u;
+      var phi = Math.acos(2 * v - 1);
 
+      vec.x = (Math.sin(phi) * Math.cos(theta));
+      vec.y = (Math.sin(phi) * Math.sin(theta));
+      vec.z = (Math.cos(phi));
+
+      return vec;
+    }
+  })(),
 
   // uses TweenMax
   ease:function(ease, t, b, c, d) {

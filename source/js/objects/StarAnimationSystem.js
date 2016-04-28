@@ -6,17 +6,16 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
 
   // position
   var aPosition = bufferGeometry.createAttribute('aPosition', 3);
-  var position = new THREE.Vector3();
+  var position, radius;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    //utils.randomSpherical(clear, spread, position);
-
-    position = utils.fibSpherePoint(i, prefabCount, THREE.Math.randFloat(clear, spread));
+    position = utils.spherePointEven();
+    radius = THREE.Math.randFloat(clear, spread);
 
     for (j = 0; j < prefabVertexCount; j++) {
-      aPosition.array[offset  ] = position.x;
-      aPosition.array[offset+1] = position.y;
-      aPosition.array[offset+2] = position.z;
+      aPosition.array[offset  ] = position.x * radius;
+      aPosition.array[offset+1] = position.y * radius;
+      aPosition.array[offset+2] = position.z * radius;
 
       offset += 3;
     }
@@ -33,7 +32,7 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     axis.z = THREE.Math.randFloatSpread(2);
     axis.normalize();
 
-    rotationSpeed = THREE.Math.randFloat(0.5, 1.5);
+    rotationSpeed = THREE.Math.randFloat(2.0, 3.0);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aAxisSpeed.array[offset  ] = axis.x;
@@ -45,7 +44,7 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     }
   }
 
-  var material = new THREE.BAS.PhongAnimationMaterial({
+  var material = new THREE.BAS.BasicAnimationMaterial({
       shading: THREE.FlatShading,
       side: THREE.DoubleSide,
       uniforms: {
@@ -69,10 +68,7 @@ function StarAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
       ]
     },
     {
-      diffuse: 0xffffff,
-      specular: 0xffffff,
-      emissive: 0x333333,
-      shininess: 40
+      diffuse: 0xffffff
     });
 
   THREE.Mesh.call(this, bufferGeometry, material);

@@ -9,7 +9,7 @@ var config = {
   earthRadius:8,
   maxAnisotropy:1,
 
-  dirBlurFactor:24,
+  dirBlurFactor:16,
   clearColor:'#000000'
 };
 
@@ -101,63 +101,50 @@ Globe.prototype = {
 
   initPostProcessing:function() {
     var renderPass = new THREE.RenderPass(this.root.scene, this.root.camera);
-    var bloomPass = new THREE.BloomPass(1.5, 25, 4.0, 256);
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
-    var fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-    var vignettePass = new THREE.ShaderPass(THREE.VignetteShader);
+    var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
+    var copyPass = new THREE.ShaderPass(THREE.CopyShader);
 
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
-
-    fxaaPass.uniforms.resolution.value.x = 1.0 / window.innerWidth;
-    fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
-    fxaaPass.enabled = false;
-
-    vignettePass.uniforms.offset.value = 0.0;
-    vignettePass.uniforms.darkness.value = 1.25;
-    vignettePass.uniforms.centerOffset.value.y = -0.225;
-
-    bloomPass.enabled = false;
-
-    this.vignettePass = vignettePass;
+    vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
 
     this.root.initPostProcessing([
       renderPass,
       hBlurPass,
-      bloomPass,
-      fxaaPass,
-      vignettePass
+      vBlurPass,
+      copyPass
     ]);
 
     this.root.addUpdateCallback(_.bind(function() {
       var rs = this.earthRotationController.rotationSpeed;
       var v = Math.abs(rs.y) * config.dirBlurFactor;
 
-      if (v >= 1.0) {
+      if (v >= 0.1) {
         hBlurPass.enabled = true;
+        vBlurPass.enabled = true;
+        copyPass.renderToScreen = false;
+        vBlurPass.renderToScreen = true;
+
         hBlurPass.uniforms.strength.value = v;
+        vBlurPass.uniforms.strength.value = v * 0.25;
       }
       else {
         hBlurPass.enabled = false;
+        vBlurPass.enabled = false;
+        copyPass.renderToScreen = true;
+        vBlurPass.renderToScreen = false;
       }
-
     }, this));
 
     this.root.addResizeCallback(function() {
       hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
-      fxaaPass.uniforms.resolution.value.x = 1.0 / window.innerWidth;
-      fxaaPass.uniforms.resolution.value.y = 1.0 / window.innerHeight;
+      vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
     });
 
     // DAT.GUI
 
     var folder = this.gui.addFolder('postprocessing');
     folder.add(config, 'dirBlurFactor').name('motion blur factor');
-    folder.add(vignettePass.uniforms.offset, 'value').name('vignette offset');
-    folder.add(vignettePass.uniforms.darkness, 'value').name('vignette darkness');
-    folder.add(vignettePass.uniforms.centerOffset.value, 'y').name('vignette center offset');
-    folder.add(bloomPass.copyUniforms.opacity, 'value').name('bloom strength');
-    folder.add(fxaaPass, 'enabled').name('enable fxaa');
-    folder.add(bloomPass, 'enabled').name('enable bloom');
   },
 
   processMarkerPositions:function() {
@@ -290,13 +277,12 @@ Globe.prototype = {
 
     var mat = new THREE.Matrix4();
     var scl = 0.5;
-    mat.multiply(new THREE.Matrix4().makeTranslation(0.5, 0.5, 0));
     mat.multiply(new THREE.Matrix4().makeScale(scl, scl, scl));
 
     prefabGeometry.applyMatrix(mat);
+    prefabGeometry.center();
 
-    var starSystem = new StarAnimationSystem(prefabGeometry, 80000, 400, 1400);
-    //starSystem.material.emissive.set(config.clearColor);
+    var starSystem = new StarAnimationSystem(prefabGeometry, 40000, 400, 1400);
     this.root.addTo(starSystem, 'earth', 'stars');
 
     var earthRotationController = this.earthRotationController;
@@ -304,32 +290,12 @@ Globe.prototype = {
     this.root.addUpdateCallback(function() {
       starSystem.update();
       starSystem.rotation.y -= earthRotationController.rotationSpeed.y * 1.25;
-      //console.log(earthRotationController.rotationSpeed);
     });
-
-
-    //var l = new THREE.DirectionalLight();
-    //l.position.set(0, 0, 1);
-    //l.
-
-    //var starsBG = new THREE.Mesh(
-    //  new THREE.SphereGeometry(1400, 200, 200, 0, Math.PI * 2, Math.PI * 0.3, Math.PI * 0.4),
-    //  //new THREE.SphereGeometry(1500, 200, 200),
-    //  new THREE.MeshBasicMaterial({
-    //    side: THREE.BackSide,
-    //    map: this.loader.get('stars')
-    //  })
-    //);
-    //
-    //this.root.addTo(starsBG, 'stars');
 
     // DAT.GUI
 
     var folder = this.gui.addFolder('stars');
     utils.createColorController(folder, starSystem.material, 'color', 'star color');
-    utils.createColorController(folder, starSystem.material, 'emissive', 'star emissive');
-    utils.createColorController(folder, starSystem.material, 'specular', 'star specular');
-    folder.add(starSystem.material, 'shininess').name('specular focus');
   },
 
   initAsteroids:function() {
@@ -443,7 +409,6 @@ Globe.prototype = {
 
   createIntroAnimation:function() {
     var rotationController = this.earthRotationController;
-    var vignettePass = this.vignettePass;
     var preloader = document.querySelector('#preloader');
     var eventDispatcher = this.eventDispatcher;
 
@@ -464,7 +429,6 @@ Globe.prototype = {
 
     tl.add(this.createCameraAnimation(11), 0.0);
     tl.add(this.createMarkersAnimation(10), 1.0);
-    tl.from(vignettePass.uniforms.offset, 11, {value:0}, 0.0);
 
     tl.add(function() {
       rotationController.enabled = true;
