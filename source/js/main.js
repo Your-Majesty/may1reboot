@@ -1,5 +1,7 @@
 //=require ../vendor/**/*.js
 
+//=require marker_data.js
+
 //=require utils.js
 //=require three/*.js
 //=require objects/*.js
@@ -41,10 +43,10 @@ var Globe = function(textureRoot) {
   this.root.add(light, 'main_light');
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this), textureRoot);
-  this.loader.loadTexture('earth_data', 'earth_data.jpg');
+  //this.loader.loadTexture('earth_data', 'earth_data.jpg');
   this.loader.loadTexture('earth_color', 'earth_color_2x.jpg');
   this.loader.loadTexture('earth_disp', 'earth_disp.jpg');
-  this.loader.loadTexture('earth_bump', 'earth_bump.png');
+  this.loader.loadTexture('earth_bump', 'earth_bump.jpg');
   this.loader.loadTexture('earth_spec', 'earth_spec.jpg');
   this.loader.loadTexture('cloud_alpha_map', 'earth_cld_alpha.jpg');
 
@@ -71,7 +73,7 @@ var Globe = function(textureRoot) {
 };
 Globe.prototype = {
   loadedHandler:function() {
-    this.pointerController = new PointerController(this.root.camera);
+    this.pointerController = new PointerController(this.root.camera, this.root.renderer.domElement);
     this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));
 
     this.processMarkerPositions();
@@ -158,46 +160,49 @@ Globe.prototype = {
   },
 
   processMarkerPositions:function() {
-    var markerImage = this.loader.get('earth_data').image;
-    var markerCnv = document.createElement('canvas');
-    var markerCtx = markerCnv.getContext('2d');
+    //var markerImage = this.loader.get('earth_data').image;
+    //var markerCnv = document.createElement('canvas');
+    //var markerCtx = markerCnv.getContext('2d');
+    //
+    //markerCnv.width = markerImage.width;
+    //markerCnv.height = markerImage.height;
+    //markerCtx.drawImage(markerImage, 0, 0, markerCnv.width, markerCnv.height);
+    //
+    //var elevationImage = this.loader.get('earth_disp').image;
+    //var elevationCnv = document.createElement('canvas');
+    //var elevationCtx = elevationCnv.getContext('2d');
+    //
+    //elevationCnv.width = markerImage.width;
+    //elevationCnv.height = markerImage.height;
+    //elevationCtx.drawImage(elevationImage, 0, 0, markerCnv.width, markerCnv.height);
+    //
+    //var markerData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
+    //var elevationData = elevationCtx.getImageData(0, 0, elevationCnv.width, elevationCnv.height).data;
+    //
+    //var threshold = 255;
+    //var elevationScale = 0.4;
+    //var elevationOffset = 0.2;
+    //
+    //var positions = [];
+    //
+    //for (var i = 0; i < markerData.length; i+=4) {
+    //  var r = markerData[i];
+    //
+    //  if (r >= threshold) {
+    //    var x = ((i / 4) % markerCnv.width) / markerCnv.width;
+    //    var y = (((i / 4) / markerCnv.width) | 0) / markerCnv.height;
+    //    var elevation = (elevationData[i] / 255 * elevationScale) + elevationOffset;
+    //
+    //    positions.push({x: x, y: y, elevation: elevation});
+    //  }
+    //}
+    //
+    //positions.sort(function(a, b) {
+    //  return a.x < b.x;
+    //});
+    //console.log(JSON.stringify(positions));
 
-    markerCnv.width = markerImage.width;
-    markerCnv.height = markerImage.height;
-    markerCtx.drawImage(markerImage, 0, 0, markerCnv.width, markerCnv.height);
-
-    var elevationImage = this.loader.get('earth_disp').image;
-    var elevationCnv = document.createElement('canvas');
-    var elevationCtx = elevationCnv.getContext('2d');
-
-    elevationCnv.width = markerImage.width;
-    elevationCnv.height = markerImage.height;
-    elevationCtx.drawImage(elevationImage, 0, 0, markerCnv.width, markerCnv.height);
-
-    var markerData = markerCtx.getImageData(0, 0, markerCnv.width, markerCnv.height).data;
-    var elevationData = elevationCtx.getImageData(0, 0, elevationCnv.width, elevationCnv.height).data;
-
-    var threshold = 255;
-    var elevationScale = 0.4;
-    var elevationOffset = 0.2;
-
-    var positions = [];
-
-    for (var i = 0; i < markerData.length; i+=4) {
-      var r = markerData[i];
-
-      if (r >= threshold) {
-        var x = ((i / 4) % markerCnv.width) / markerCnv.width;
-        var y = (((i / 4) / markerCnv.width) | 0) / markerCnv.height;
-        var elevation = (elevationData[i] / 255 * elevationScale) + elevationOffset;
-
-        positions.push({x: x, y: y, elevation: elevation});
-      }
-    }
-
-    positions.sort(function(a, b) {
-      return a.x < b.x;
-    });
+    var positions = JSON.parse(window.markerDataStr);
 
     this.markerPositions = [];
 
@@ -248,7 +253,7 @@ Globe.prototype = {
     this.root.addTo(halo, 'earth', 'halo');
     this.pointerController.register(earth);
 
-    this.earthRotationController = new ObjectRotationController(earth);
+    this.earthRotationController = new ObjectRotationController(earth, this.root.renderer.domElement);
     this.root.addUpdateCallback(_.bind(this.earthRotationController.update, this.earthRotationController));
 
     // DAT.GUI
