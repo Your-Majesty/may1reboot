@@ -24,9 +24,15 @@ var Globe = function(textureRoot) {
   // for three.js inspector
   window.scene = this.root.scene;
 
-  this.initGUI();
-
   config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
+
+  var device = new MobileDetect(window.navigator.userAgent);
+  this.mobileMode = device.mobile();
+
+  if (!this.mobileMode) {
+    this.initGUI();
+  }
+
   this.root.renderer.setClearColor(config.clearColor);
   this.root.camera.position.y = 160;
 
@@ -49,6 +55,7 @@ var Globe = function(textureRoot) {
   }, this));
 
   // DAT.GUI
+  if (!this.gui) return;
 
   var folder = this.gui.addFolder('scene');
   var root = this.root;
@@ -74,7 +81,9 @@ Globe.prototype = {
     this.initMarkers();
     this.initAsteroids();
 
-    this.initPostProcessing();
+    if (!this.mobileMode) {
+      this.initPostProcessing();
+    }
 
     this.createIntroAnimation();
 
@@ -142,6 +151,7 @@ Globe.prototype = {
     });
 
     // DAT.GUI
+    if (!this.gui) return;
 
     var folder = this.gui.addFolder('postprocessing');
     folder.add(config, 'dirBlurFactor').name('motion blur factor');
@@ -206,7 +216,7 @@ Globe.prototype = {
       new THREE.MeshPhongMaterial({
         map: this.loader.get('earth_color'),
 
-        displacementMap: this.loader.get('earth_disp'),
+        displacementMap: this.mobileMode ? undefined : this.loader.get('earth_disp'),
         displacementScale: 0.55,
         displacementBias: -0.10,
 
@@ -242,6 +252,7 @@ Globe.prototype = {
     this.root.addUpdateCallback(_.bind(this.earthRotationController.update, this.earthRotationController));
 
     // DAT.GUI
+    if (!this.gui) return;
 
     var earthFolder = this.gui.addFolder('earth');
     earthFolder.add(earth.material, 'displacementScale');
@@ -291,6 +302,7 @@ Globe.prototype = {
     });
 
     // DAT.GUI
+    if (!this.gui) return;
 
     var folder = this.gui.addFolder('stars');
     utils.createColorController(folder, starSystem.material, 'color', 'star color');
@@ -390,6 +402,7 @@ Globe.prototype = {
     }
 
     // DAT.GUI
+    if (!this.gui) return;
 
     var folder = this.gui.addFolder('markers');
     utils.createColorController(folder, idleAnimation.material.uniforms.uPassiveColor, 'value', 'passive color');
@@ -437,6 +450,8 @@ Globe.prototype = {
     tl.timeScale(2);
 
     // gui
+    if (!this.gui) return;
+
     var ctrl = {
       replay:function() {
         tl.play('preloader_hide_complete');
