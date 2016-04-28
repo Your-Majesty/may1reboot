@@ -84,7 +84,7 @@ Globe.prototype = {
   initGUI:function() {
     var gui = this.gui = new dat.GUI();
 
-    //gui.domElement.style.visibility = 'hidden';
+    gui.domElement.style.visibility = 'hidden';
     gui.domElement.parentNode.style.zIndex = '9001';
     gui.width = 400;
     window.addEventListener('keydown', function(e) {
@@ -189,8 +189,6 @@ Globe.prototype = {
       return a.x < b.x;
     });
 
-    console.log('position count', positions.length);
-
     this.markerPositions = [];
 
     for (var j = 0; j < positions.length; j++) {
@@ -282,7 +280,7 @@ Globe.prototype = {
     prefabGeometry.applyMatrix(mat);
     prefabGeometry.center();
 
-    var starSystem = new StarAnimationSystem(prefabGeometry, 40000, 400, 1400);
+    var starSystem = new StarAnimationSystem(prefabGeometry, 20000, 400, 1400);
     this.root.addTo(starSystem, 'earth', 'stars');
 
     var earthRotationController = this.earthRotationController;
@@ -301,7 +299,7 @@ Globe.prototype = {
   initAsteroids:function() {
     var prefabGeometry = new THREE.TetrahedronGeometry(2.0);
 
-    var asteroidSystem = new AsteroidAnimationSystem(prefabGeometry, 100, 50, 200);
+    var asteroidSystem = new AsteroidAnimationSystem(prefabGeometry, 200, 50, 400);
 
     this.root.add(asteroidSystem);
 

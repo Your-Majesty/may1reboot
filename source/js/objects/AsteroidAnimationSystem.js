@@ -42,7 +42,7 @@ function AsteroidAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     orbitAxis.y = THREE.Math.randFloatSpread(2);
     orbitAxis.z = THREE.Math.randFloatSpread(2);
     orbitAxis.normalize();
-    orbitSpeed = THREE.Math.randFloat(0.125, 0.25);
+    orbitSpeed = THREE.Math.randFloat(0.05, 0.125);
 
     for (j = 0; j < prefabVertexCount; j++) {
       aSpin.array[offset  ] = spinAxis.x;
@@ -86,6 +86,7 @@ function AsteroidAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     },
     {
       diffuse: 0x242424,
+      emissive: 0x121212,
       specular: 0xffffff,
       shininess: 40
     });
