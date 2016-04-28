@@ -19,18 +19,20 @@ var Globe = function(textureRoot) {
     autoStart: false,
     fov: 20
   });
+  this.eventDispatcher = new THREE.EventDispatcher();
+
+  // for three.js inspector
   window.scene = this.root.scene;
 
   this.initGUI();
 
   config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
-
   this.root.renderer.setClearColor(config.clearColor);
   this.root.camera.position.y = 160;
 
   var light = new THREE.DirectionalLight(0xffffff, 2.0);
   light.position.set(-1.0, 0.5, -0.1);
-  this.root.add(light, 'dirLight1');
+  this.root.add(light, 'main_light');
 
   this.loader = new THREELoader(_.bind(this.loadedHandler, this), textureRoot);
   this.loader.loadTexture('earth_data', 'earth_data.jpg');
@@ -42,7 +44,9 @@ var Globe = function(textureRoot) {
 
   console.warn = function() {}; // shhhhh!
 
-  this.eventDispatcher = new THREE.EventDispatcher();
+  this.root.addResizeCallback(_.bind(function() {
+    this.root.camera.position.z = this.computeCameraDistance();
+  }, this));
 
   // DAT.GUI
 
@@ -59,10 +63,6 @@ var Globe = function(textureRoot) {
   folder.add(light.position, 'y').name('light origin z');
 };
 Globe.prototype = {
-  addEventListener:function(type, handler) {
-    this.eventDispatcher.addEventListener(type, handler);
-  },
-
   loadedHandler:function() {
     this.pointerController = new PointerController(this.root.camera);
     this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));
@@ -425,6 +425,8 @@ Globe.prototype = {
 
     tl.to(this.root.renderer.domElement, 2.00, {opacity:1, ease:Circ.easeIn}, 0);
 
+    tl.fromTo(this.root.get('main_light'), 10.0, {intensity:0.0}, {intensity:2.0}, 0.0);
+
     tl.add(this.createCameraAnimation(11), 0.0);
     tl.add(this.createMarkersAnimation(10), 1.0);
 
@@ -487,18 +489,44 @@ Globe.prototype = {
     }
 
     var tl = new TimelineMax({onUpdate: update});
+    var distance = this.computeCameraDistance();
 
-    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:32, eyeHeight:eyeHeight, ease:Power1.easeInOut});
+    tl.to(proxy, duration, {angle:Math.PI * -1.5, distance:distance, eyeHeight:eyeHeight, ease:Power1.easeInOut});
 
     update();
 
     return tl;
   },
 
+  computeCameraDistance:function() {
+    var ratio = window.innerWidth / window.innerHeight;
+    var distance;
+
+    if (ratio < 1.0) {
+      distance = 32 + 64 * (1.0 - ratio);
+    }
+    else {
+      distance = 32;
+    }
+
+    return distance;
+  },
+
   setGlobeTexture:function(image) {
     this.root.objects['earth'].material.map.image = image;
     this.root.objects['earth'].material.map.needsUpdate = true;
     this.root.objects['earth'].material.map.anisotropy = config.maxAnisotropy;
+  },
+
+  enableScrollLock:function() {
+    this.pointerController.scrollLocked = true;
+  },
+  disableScrollLock:function() {
+    this.pointerController.scrollLocked = false;
+  },
+
+  addEventListener:function(type, handler) {
+    this.eventDispatcher.addEventListener(type, handler);
   },
 };
 

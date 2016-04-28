@@ -1,7 +1,8 @@
 function PointerController(camera, element) {
   element = element || window;
 
-  var enabled = true;
+  var mEnabled = true;
+  var mScrollLocked = true;
 
   var mRayCaster = new THREE.Raycaster();
   var mPointerNDC = new THREE.Vector2();
@@ -143,10 +144,14 @@ function PointerController(camera, element) {
     var touch = e.changedTouches[0];
     updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerMove();
+
+    if (mScrollLocked) {
+      e.preventDefault();
+    }
   });
 
   this.update = function() {
-    if (!enabled) return;
+    if (!mEnabled) return;
     if (mHoverObject) handlePointerMove();
   };
 
@@ -162,5 +167,9 @@ function PointerController(camera, element) {
 
   Object.defineProperty(this, 'intersections', {
     get:function() {return mIntersections}
+  });
+
+  Object.defineProperty(this, 'scrollLocked', {
+    set:function(v) {mScrollLocked = v}
   });
 }

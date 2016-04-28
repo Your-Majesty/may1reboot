@@ -18,6 +18,11 @@ body.three-grabbing #three-container {
   background: #0f0f0f;
   width: 100vw;
   height: 100vh;
+
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
 }
 
 #three-container {

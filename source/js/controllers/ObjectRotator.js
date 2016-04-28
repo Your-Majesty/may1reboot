@@ -18,6 +18,11 @@ function ObjectRotationController(object, element) {
   var vMin = -Math.PI * 0.5;
   var vMax = 0.25;
 
+  window.addEventListener('resize', function () {
+    center.x = window.innerWidth * 0.5;
+    center.y = window.innerHeight * 0.5;
+  });
+
   object.addEventListener('pointer_down', function(e) {
     if (!enabled) return;
 
