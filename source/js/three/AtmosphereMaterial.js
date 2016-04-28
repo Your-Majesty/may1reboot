@@ -38,7 +38,7 @@ function AtmosphereMaterial(params) {
 
     ' vec4 alpha = texture2D(alphaMap, vUv);',
 
-    '	gl_FragColor = vec4(glowColor * alpha.rgb, intensity);',
+    '	gl_FragColor = vec4(glowColor * alpha.rgb, intensity * 0.6);',
     '}'
   ].join('\n');
 

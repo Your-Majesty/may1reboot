@@ -223,8 +223,8 @@ Globe.prototype = {
       new AtmosphereMaterial({
         alphaMap: this.loader.get('cloud_alpha_map'),
         color: 0xAFD2E4,
-        power: 4.0,
-        coefficient: 0.8
+        power: 7.0,
+        coefficient: 1.0 // weird ios bug causes blackness with values < 1 :(
       })
     );
 
