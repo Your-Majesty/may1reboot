@@ -1,7 +1,7 @@
 function PointerController(camera, element) {
   element = element || window;
 
-  var mEnabled = true;
+  var mTouchEnabled = true;
   var mScrollLocked = true;
 
   var mRayCaster = new THREE.Raycaster();
@@ -127,6 +127,8 @@ function PointerController(camera, element) {
 
   // touch
   element.addEventListener('touchstart', function(e) {
+    if (!mTouchEnabled) return;
+
     var touch = e.changedTouches[0];
     updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerDown();
@@ -134,6 +136,8 @@ function PointerController(camera, element) {
     //e.preventDefault();
   });
   element.addEventListener('touchend', function(e) {
+    if (!mTouchEnabled) return;
+
     var touch = e.changedTouches[0];
     updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerUp();
@@ -141,6 +145,8 @@ function PointerController(camera, element) {
     //e.preventDefault();
   });
   element.addEventListener('touchmove', function(e) {
+    if (!mTouchEnabled) return;
+
     var touch = e.changedTouches[0];
     updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerMove();
@@ -151,7 +157,6 @@ function PointerController(camera, element) {
   });
 
   this.update = function() {
-    if (!mEnabled) return;
     if (mHoverObject) handlePointerMove();
   };
 
@@ -171,5 +176,9 @@ function PointerController(camera, element) {
 
   Object.defineProperty(this, 'scrollLocked', {
     set:function(v) {mScrollLocked = v}
+  });
+
+  Object.defineProperty(this, 'touchEnabled', {
+    set:function(v) {mTouchEnabled = v}
   });
 }

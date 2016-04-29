@@ -544,6 +544,7 @@ Globe.prototype = {
   },
   disableScrollLock:function() {
     this.pointerController.scrollLocked = false;
+    this.pointerController.touchEnabled = false;
   },
 
   addEventListener:function(type, handler) {
