@@ -16,87 +16,89 @@ var config = {
 };
 
 var Globe = function(textureRoot) {
-
   // init event dispatcher
   this.eventDispatcher = new THREE.EventDispatcher();
-
-  // init root / do some basic scene stuff
-  try {
-    this.root = new THREERoot({
-      createCameraControls: !true,
-      autoStart: false,
-      fov: 20
-    });
-  }
-  catch(e) {
-    // fallback state
-    document.querySelector('.globe').classList.add('error');
-    document.querySelector('#preloader').style.display = 'none';
-
-    this.eventDispatcher.dispatchEvent({type:'webgl_error'});
-
-    return;
-  }
-
-
-  this.root.renderer.setClearColor(config.clearColor);
-  this.root.camera.position.y = 160;
-
-  var light = new THREE.DirectionalLight(0xffffff, 2.0);
-  light.position.set(-1.0, 0.5, -0.1);
-  this.root.add(light, 'main_light');
-
-  this.root.addResizeCallback(_.bind(function() {
-    this.root.camera.position.z = this.computeCameraDistance();
-  }, this));
-
-  // for three.js inspector
-  window.scene = this.root.scene;
-
-  // improve texture rendering near poles
-  config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
-
-  // mobile / destkop settings
-  var device = new MobileDetect(window.navigator.userAgent);
-  this.mobileMode = device.mobile();
-
-  if (!this.mobileMode) {
-    this.initGUI();
-  }
-
-  if (this.mobileMode) {
-    this.initMobileResizeMode();
-  }
-
-  // load the things
-  this.loader = new THREELoader(_.bind(this.loadedHandler, this), textureRoot);
-  //this.loader.loadTexture('earth_data', 'earth_data.jpg');
-  this.loader.loadTexture('earth_color', 'earth_color_2x.jpg');
-  this.loader.loadTexture('earth_disp', 'earth_disp.jpg');
-  this.loader.loadTexture('earth_bump', 'earth_bump.jpg');
-  this.loader.loadTexture('earth_spec', 'earth_spec.jpg');
-  this.loader.loadTexture('cloud_alpha_map', 'earth_cld_alpha.jpg');
-
-  // console things
-  console.warn = function() {}; // shhhhh!
-  console.log("Howdy! WebGL goodies brought to you by @zadvorsky. Press '~' to play around with our development settings :D");
-
-  // DAT.GUI
-  if (!this.gui) return;
-
-  var folder = this.gui.addFolder('scene');
-  var root = this.root;
-
-  folder.addColor(config, 'clearColor').onChange(function(value) {
-    root.renderer.setClearColor(value);
-  });
-  utils.createColorController(folder, light, 'color', 'light color');
-  folder.add(light, 'intensity').name('light intensity');
-  folder.add(light.position, 'x').name('light origin x');
-  folder.add(light.position, 'z').name('light origin y');
-  folder.add(light.position, 'y').name('light origin z');
+  this.textureRoot = textureRoot;
 };
 Globe.prototype = {
+  init:function() {
+    // init root / do some basic scene stuff
+    try {
+      this.root = new THREERoot({
+        createCameraControls: !true,
+        autoStart: false,
+        fov: 20
+      });
+    }
+    catch(e) {
+      // fallback state
+      document.querySelector('.globe').classList.add('error');
+      document.querySelector('#preloader').style.display = 'none';
+
+      this.eventDispatcher.dispatchEvent({type:'webgl_error'});
+
+      return;
+    }
+
+
+    this.root.renderer.setClearColor(config.clearColor);
+    this.root.camera.position.y = 160;
+
+    var light = new THREE.DirectionalLight(0xffffff, 2.0);
+    light.position.set(-1.0, 0.5, -0.1);
+    this.root.add(light, 'main_light');
+
+    this.root.addResizeCallback(_.bind(function() {
+      this.root.camera.position.z = this.computeCameraDistance();
+    }, this));
+
+    // for three.js inspector
+    window.scene = this.root.scene;
+
+    // improve texture rendering near poles
+    config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
+
+    // mobile / destkop settings
+    var device = new MobileDetect(window.navigator.userAgent);
+    this.mobileMode = device.mobile();
+
+    if (!this.mobileMode) {
+      this.initGUI();
+    }
+
+    if (this.mobileMode) {
+      this.initMobileResizeMode();
+    }
+
+    // load the things
+    this.loader = new THREELoader(_.bind(this.loadedHandler, this), this.textureRoot);
+    //this.loader.loadTexture('earth_data', 'earth_data.jpg');
+    this.loader.loadTexture('earth_color', 'earth_color_2x.jpg');
+    this.loader.loadTexture('earth_disp', 'earth_disp.jpg');
+    this.loader.loadTexture('earth_bump', 'earth_bump.jpg');
+    this.loader.loadTexture('earth_spec', 'earth_spec.jpg');
+    this.loader.loadTexture('cloud_alpha_map', 'earth_cld_alpha.jpg');
+
+    // console things
+    console.warn = function() {}; // shhhhh!
+    console.log("Howdy! WebGL goodies brought to you by @zadvorsky. Press '~' to play around with our development settings :D");
+
+    // DAT.GUI
+    if (!this.gui) return;
+
+    var folder = this.gui.addFolder('scene');
+    var root = this.root;
+
+    folder.addColor(config, 'clearColor').onChange(function(value) {
+      root.renderer.setClearColor(value);
+    });
+    utils.createColorController(folder, light, 'color', 'light color');
+    folder.add(light, 'intensity').name('light intensity');
+    folder.add(light.position, 'x').name('light origin x');
+    folder.add(light.position, 'z').name('light origin y');
+    folder.add(light.position, 'y').name('light origin z');
+  },
+
   loadedHandler:function() {
     this.pointerController = new PointerController(this.root.camera); //this.root.renderer.domElement
     this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));

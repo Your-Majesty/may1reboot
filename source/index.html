@@ -22,12 +22,17 @@
 <script>
   window.globe = new Globe('/res/tex');
 
+  window.globe.addEventListener('webgl_error', function() {
+    console.log('webgl_error');
+  });
   window.globe.addEventListener('preloader_hide_start', function() {
     console.log('preloader hide start');
   });
   window.globe.addEventListener('preloader_hide_complete', function() {
     console.log('preloader hide complete');
   });
+
+  window.globe.init();
 </script>
 
 <!-- Release <%= version %> at <%= new Date() %> -->
