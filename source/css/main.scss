@@ -25,6 +25,22 @@ body.three-grabbing #three-container {
   user-select: none;
 }
 
+.globe.error {
+  #three-container {
+    background-image: url(../res/img/globe_fallback.jpg);
+    background-size: cover;
+    background-position: center;
+  }
+
+  .webgl-error {
+    display: block;
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    color: #d40c05;
+  }
+}
+
 #three-container {
   line-height: 0;
   width: 100%;

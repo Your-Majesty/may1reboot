@@ -16,12 +16,28 @@ var config = {
 };
 
 var Globe = function(textureRoot) {
+
+  // init event dispatcher
+  this.eventDispatcher = new THREE.EventDispatcher();
+
   // init root / do some basic scene stuff
-  this.root = new THREERoot({
-    createCameraControls: !true,
-    autoStart: false,
-    fov: 20
-  });
+  try {
+    this.root = new THREERoot({
+      createCameraControls: !true,
+      autoStart: false,
+      fov: 20
+    });
+  }
+  catch(e) {
+    // fallback state
+    document.querySelector('.globe').classList.add('error');
+    document.querySelector('#preloader').style.display = 'none';
+
+    this.eventDispatcher.dispatchEvent({type:'webgl_error'});
+
+    return;
+  }
+
 
   this.root.renderer.setClearColor(config.clearColor);
   this.root.camera.position.y = 160;
@@ -33,9 +49,6 @@ var Globe = function(textureRoot) {
   this.root.addResizeCallback(_.bind(function() {
     this.root.camera.position.z = this.computeCameraDistance();
   }, this));
-
-  // init event dispatcher
-  this.eventDispatcher = new THREE.EventDispatcher();
 
   // for three.js inspector
   window.scene = this.root.scene;
