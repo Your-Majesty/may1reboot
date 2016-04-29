@@ -25,6 +25,10 @@ body.three-grabbing #three-container {
   user-select: none;
 }
 
+.webgl-error {
+  display: none;
+}
+
 .globe.error {
   #three-container {
     background-image: url(../res/img/globe_fallback.jpg);
