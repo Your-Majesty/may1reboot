@@ -16,24 +16,12 @@ var config = {
 };
 
 var Globe = function(textureRoot) {
+  // init root / do some basic scene stuff
   this.root = new THREERoot({
     createCameraControls: !true,
     autoStart: false,
     fov: 20
   });
-  this.eventDispatcher = new THREE.EventDispatcher();
-
-  // for three.js inspector
-  window.scene = this.root.scene;
-
-  config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
-
-  var device = new MobileDetect(window.navigator.userAgent);
-  this.mobileMode = device.mobile();
-
-  if (!this.mobileMode) {
-    this.initGUI();
-  }
 
   this.root.renderer.setClearColor(config.clearColor);
   this.root.camera.position.y = 160;
@@ -42,6 +30,32 @@ var Globe = function(textureRoot) {
   light.position.set(-1.0, 0.5, -0.1);
   this.root.add(light, 'main_light');
 
+  this.root.addResizeCallback(_.bind(function() {
+    this.root.camera.position.z = this.computeCameraDistance();
+  }, this));
+
+  // init event dispatcher
+  this.eventDispatcher = new THREE.EventDispatcher();
+
+  // for three.js inspector
+  window.scene = this.root.scene;
+
+  // improve texture rendering near poles
+  config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
+
+  // mobile / destkop settings
+  var device = new MobileDetect(window.navigator.userAgent);
+  this.mobileMode = device.mobile();
+
+  if (!this.mobileMode) {
+    this.initGUI();
+  }
+
+  if (this.mobileMode) {
+    this.initMobileResizeMode();
+  }
+
+  // load the things
   this.loader = new THREELoader(_.bind(this.loadedHandler, this), textureRoot);
   //this.loader.loadTexture('earth_data', 'earth_data.jpg');
   this.loader.loadTexture('earth_color', 'earth_color_2x.jpg');
@@ -50,15 +64,9 @@ var Globe = function(textureRoot) {
   this.loader.loadTexture('earth_spec', 'earth_spec.jpg');
   this.loader.loadTexture('cloud_alpha_map', 'earth_cld_alpha.jpg');
 
+  // console things
   console.warn = function() {}; // shhhhh!
-
-  this.root.addResizeCallback(_.bind(function() {
-    this.root.camera.position.z = this.computeCameraDistance();
-  }, this));
-
-  if (this.mobileMode) {
-    this.initMobileResizeMode();
-  }
+  console.log("Howdy! Press '~' to play around with the settings we left behind. - @zadvorsky");
 
   // DAT.GUI
   if (!this.gui) return;
@@ -134,13 +142,18 @@ Globe.prototype = {
     gui.domElement.style.visibility = 'hidden';
     gui.domElement.parentNode.style.zIndex = '9001';
     gui.width = 400;
+
+    var overlay = document.querySelector('.special-headline');
+
     window.addEventListener('keydown', function(e) {
       if (e.keyCode === 192) { // tilde
         if (gui.domElement.style.visibility === 'hidden') {
           gui.domElement.style.visibility = 'visible';
+          overlay && (overlay.style.display = 'none');
         }
         else {
           gui.domElement.style.visibility = 'hidden';
+          overlay && (overlay.style.display = '');
         }
       }
     });
@@ -360,6 +373,15 @@ Globe.prototype = {
     this.root.addUpdateCallback(function() {
       asteroidSystem.update();
     });
+
+    // DAT.GUI
+    if (!this.gui) return;
+
+    var folder = this.gui.addFolder('asteroid');
+    utils.createColorController(folder, asteroidSystem.material, 'color', 'asteroid color');
+    utils.createColorController(folder, asteroidSystem.material, 'emissive', 'asteroid emissive');
+    utils.createColorController(folder, asteroidSystem.material, 'specular', 'asteroid specular');
+    folder.add(asteroidSystem.material, 'shininess').name('specular focus');
   },
 
   initMarkers:function() {
@@ -447,7 +469,7 @@ Globe.prototype = {
     if (!this.gui) return;
 
     var folder = this.gui.addFolder('markers');
-    utils.createColorController(folder, idleAnimation.material.uniforms.uPassiveColor, 'value', 'passive color');
+    //utils.createColorController(folder, idleAnimation.material.uniforms.uPassiveColor, 'value', 'passive color');
     utils.createColorController(folder, idleAnimation.material.uniforms.uActiveColor, 'value', 'active color');
     folder.add(idleAnimation.material.uniforms.uScale.value, 'x').name('scale');
     folder.add(idleAnimation.material.uniforms.uScale.value, 'y').name('passive scale delta');
@@ -496,6 +518,8 @@ Globe.prototype = {
 
     var ctrl = {
       replay:function() {
+        rotationController.enabled = false;
+        rotationController.reset();
         tl.play('preloader_hide_complete');
       }
     };

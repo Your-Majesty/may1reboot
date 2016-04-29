@@ -65,6 +65,15 @@ function ObjectRotationController(object, element) {
     targetRotation.y = THREE.Math.clamp(targetRotation.y, vMin, vMax);
   };
 
+  this.reset = function() {
+    startPosition.set(0, 0);
+    targetRotation.set(0, 0);
+    startRotation.set(0, 0);
+    delta.set(0, 0);
+    rotationSpeed.set(0, 0);
+    object.rotation.set(0, 0, 0);
+  };
+
   Object.defineProperty(this, 'enabled', {
     get:function() {return enabled},
     set:function(v) {enabled = v}
