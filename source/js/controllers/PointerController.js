@@ -2,6 +2,7 @@ function PointerController(camera, element) {
   element = element || window;
 
   var mTouchEnabled = true;
+  var mEnabled = true;
   var mScrollLocked = true;
 
   var mRayCaster = new THREE.Raycaster();
@@ -113,14 +114,20 @@ function PointerController(camera, element) {
 
   // mouse
   element.addEventListener('mousedown', function(e) {
+    if (!mEnabled) return;
+
     updatePointerPosition(e.clientX, e.clientY);
     handlePointerDown();
   });
   element.addEventListener('mouseup', function(e) {
+    if (!mEnabled) return;
+
     updatePointerPosition(e.clientX, e.clientY);
     handlePointerUp();
   });
   element.addEventListener('mousemove', function(e) {
+    if (!mEnabled) return;
+
     updatePointerPosition(e.clientX, e.clientY);
     handlePointerMove();
   });
@@ -128,6 +135,7 @@ function PointerController(camera, element) {
   // touch
   element.addEventListener('touchstart', function(e) {
     if (!mTouchEnabled) return;
+    if (!mEnabled) return;
 
     var touch = e.changedTouches[0];
     updatePointerPosition(touch.clientX, touch.clientY);
@@ -136,6 +144,7 @@ function PointerController(camera, element) {
     //e.preventDefault();
   });
   element.addEventListener('touchend', function(e) {
+    if (!mEnabled) return;
     if (!mTouchEnabled) return;
 
     var touch = e.changedTouches[0];
@@ -145,6 +154,7 @@ function PointerController(camera, element) {
     //e.preventDefault();
   });
   element.addEventListener('touchmove', function(e) {
+    if (!mEnabled) return;
     if (!mTouchEnabled) return;
 
     var touch = e.changedTouches[0];
@@ -157,6 +167,7 @@ function PointerController(camera, element) {
   });
 
   this.update = function() {
+    if (!mEnabled) return;
     if (mHoverObject) handlePointerMove();
   };
 
@@ -176,6 +187,10 @@ function PointerController(camera, element) {
 
   Object.defineProperty(this, 'scrollLocked', {
     set:function(v) {mScrollLocked = v}
+  });
+
+  Object.defineProperty(this, 'enabled', {
+    set:function(v) {mEnabled = v}
   });
 
   Object.defineProperty(this, 'touchEnabled', {

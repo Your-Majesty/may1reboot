@@ -66,7 +66,7 @@ var Globe = function(textureRoot) {
 
   // console things
   console.warn = function() {}; // shhhhh!
-  console.log("Howdy! Press '~' to play around with the settings we left behind. - @zadvorsky");
+  console.log("Howdy! WebGL goodies brought to you by @zadvorsky. Press '~' to play around with our development settings :D");
 
   // DAT.GUI
   if (!this.gui) return;
@@ -145,6 +145,45 @@ Globe.prototype = {
 
     var overlay = document.querySelector('.special-headline');
 
+    var debugCamera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 1, 10000);
+
+    debugCamera.position.z = 100;
+
+    this.root.addResizeCallback(function() {
+      debugCamera.aspect = window.innerWidth / window.innerHeight;
+      debugCamera.updateProjectionMatrix();
+    });
+
+    var controls = new THREE.OrbitControls(debugCamera);
+    var defaultCamera = this.root.camera;
+    var usingDebugCamera = false;
+    var _this = this;
+
+    controls.enabled = false;
+
+    var ctrl = {
+      toggleDebugCamera:function() {
+        if (usingDebugCamera) {
+          controls.enabled = false;
+          _this.earthRotationController.enabled = true;
+          _this.pointerController.enabled = true;
+          _this.root.get('extra_special').visible = false;
+          _this.renderPass.camera = defaultCamera;
+        }
+        else {
+          controls.enabled = true;
+          _this.earthRotationController.enabled = false;
+          _this.pointerController.enabled = false;
+          _this.root.get('extra_special').visible = true;
+          _this.renderPass.camera = debugCamera;
+        }
+
+        usingDebugCamera = !usingDebugCamera;
+      }
+    };
+
+    gui.add(ctrl, 'toggleDebugCamera').name('toggle debug cam & controls');
+
     window.addEventListener('keydown', function(e) {
       if (e.keyCode === 192) { // tilde
         if (gui.domElement.style.visibility === 'hidden') {
@@ -164,6 +203,8 @@ Globe.prototype = {
     var hBlurPass = new THREE.ShaderPass(THREE.HorizontalBlurShader);
     var vBlurPass = new THREE.ShaderPass(THREE.VerticalBlurShader);
     var copyPass = new THREE.ShaderPass(THREE.CopyShader);
+
+    this.renderPass = renderPass;
 
     hBlurPass.uniforms.h.value = 1.0 / window.innerWidth;
     vBlurPass.uniforms.v.value = 1.0 / window.innerHeight;
@@ -377,7 +418,15 @@ Globe.prototype = {
     // DAT.GUI
     if (!this.gui) return;
 
-    var folder = this.gui.addFolder('asteroid');
+    var extraSpecialGeometry = new THREE.TetrahedronGeometry(1.0);
+    var extraSpecial = new AsteroidAnimationSystem(extraSpecialGeometry, 600, 0, 0);
+    this.root.add(extraSpecial, 'extra_special');
+
+    this.root.addUpdateCallback(function() {
+      extraSpecial.update(0.1);
+    });
+
+    var folder = this.gui.addFolder('asteroids');
     utils.createColorController(folder, asteroidSystem.material, 'color', 'asteroid color');
     utils.createColorController(folder, asteroidSystem.material, 'emissive', 'asteroid emissive');
     utils.createColorController(folder, asteroidSystem.material, 'specular', 'asteroid specular');
@@ -521,10 +570,16 @@ Globe.prototype = {
         rotationController.enabled = false;
         rotationController.reset();
         tl.play('preloader_hide_complete');
-      }
+      },
+      timeScale:tl.timeScale()
     };
 
-    this.gui.add(ctrl, 'replay').name('replay intro');
+    var folder = this.gui.addFolder('intro');
+
+    folder.add(ctrl, 'timeScale').name('animation time scale').onChange(function(v) {
+      tl.timeScale(v);
+    });
+    folder.add(ctrl, 'replay').name('replay intro');
   },
 
   createMarkersAnimation:function(duration) {

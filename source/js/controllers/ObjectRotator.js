@@ -76,7 +76,13 @@ function ObjectRotationController(object, element) {
 
   Object.defineProperty(this, 'enabled', {
     get:function() {return enabled},
-    set:function(v) {enabled = v}
+    set:function(v) {
+      enabled = v;
+
+      if (!enabled) {
+        rotationSpeed.set(0, 0);
+      }
+    }
   });
 
   Object.defineProperty(this, 'dragSpeed', {

@@ -98,8 +98,8 @@ function AsteroidAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
 AsteroidAnimationSystem.prototype = Object.create(THREE.Mesh.prototype);
 AsteroidAnimationSystem.prototype.constructor = AsteroidAnimationSystem;
 
-AsteroidAnimationSystem.prototype.update = function() {
-  this.material.uniforms['uTime'].value += (1/60);
+AsteroidAnimationSystem.prototype.update = function(timeScale) {
+  this.material.uniforms['uTime'].value += (1/60) * (timeScale ? timeScale : 1.0);
 };
 
 
