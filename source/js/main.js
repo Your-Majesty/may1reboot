@@ -56,6 +56,10 @@ var Globe = function(textureRoot) {
     this.root.camera.position.z = this.computeCameraDistance();
   }, this));
 
+  if (this.mobileMode) {
+    this.initMobileResizeMode();
+  }
+
   // DAT.GUI
   if (!this.gui) return;
 
@@ -90,6 +94,38 @@ Globe.prototype = {
     this.createIntroAnimation();
 
     this.root.start();
+  },
+
+  initMobileResizeMode: function() {
+    window.removeEventListener('resize', this.root.resize);
+
+    var currentWidth = window.innerWidth;
+    var currentHeight = window.innerHeight;
+
+    var globeContainer = document.querySelector('.globe');
+
+    globeContainer.style.height = currentHeight + 'px';
+
+    this.root.resize = _.bind(function() {
+      var newWidth = window.innerWidth;
+      var newHeight = window.innerHeight;
+
+      if (newWidth === currentWidth) return;
+
+      currentWidth = newWidth;
+      currentHeight = newHeight;
+
+      globeContainer.style.height = currentHeight + 'px';
+
+      this.camera.aspect = currentWidth / currentHeight;
+      this.camera.updateProjectionMatrix();
+
+      this.renderer.setSize(currentWidth, currentHeight);
+
+      this.resizeCallbacks.forEach(function(callback) {callback()});
+    }, this.root);
+
+    window.addEventListener('resize', this.root.resize, false);
   },
 
   initGUI:function() {

@@ -179,6 +179,13 @@ function PointerController(camera, element) {
   });
 
   Object.defineProperty(this, 'touchEnabled', {
-    set:function(v) {mTouchEnabled = v}
+    set:function(v) {
+
+      if (!v) {
+        handlePointerUp();
+      }
+
+      mTouchEnabled = v
+    }
   });
 }
