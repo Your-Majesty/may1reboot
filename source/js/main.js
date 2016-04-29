@@ -154,7 +154,7 @@ Globe.prototype = {
       debugCamera.updateProjectionMatrix();
     });
 
-    var controls = new THREE.OrbitControls(debugCamera);
+    var controls = this.debugControls = new THREE.OrbitControls(debugCamera);
     var defaultCamera = this.root.camera;
     var usingDebugCamera = false;
     var _this = this;
@@ -660,6 +660,7 @@ Globe.prototype = {
   disableScrollLock:function() {
     this.pointerController.scrollLocked = false;
     this.pointerController.touchEnabled = false;
+    this.debugControls && (this.debugControls.enabled = false);
   },
 
   addEventListener:function(type, handler) {
