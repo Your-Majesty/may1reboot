@@ -73,7 +73,7 @@ var Globe = function(textureRoot) {
 };
 Globe.prototype = {
   loadedHandler:function() {
-    this.pointerController = new PointerController(this.root.camera, this.root.renderer.domElement);
+    this.pointerController = new PointerController(this.root.camera); //this.root.renderer.domElement
     this.root.addUpdateCallback(_.bind(this.pointerController.update, this.pointerController));
 
     this.processMarkerPositions();
@@ -202,6 +202,7 @@ Globe.prototype = {
     //});
     //console.log(JSON.stringify(positions));
 
+    // output from the commented function above
     var positions = JSON.parse(window.markerDataStr);
 
     this.markerPositions = [];

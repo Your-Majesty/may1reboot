@@ -63,3 +63,7 @@ body.three-grabbing #three-container {
   from {transform:rotate(0deg);}
   to {transform:rotate(360deg);}
 }
+
+.dg.ac * {
+  box-sizing: content-box !important;
+}

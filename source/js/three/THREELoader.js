@@ -7,8 +7,12 @@ THREELoader.prototype = {
   loadTexture: function(key, path, onComplete) {
     var data = this.data;
 
+    console.log('added', path, this.manager);
+
     new THREE.TextureLoader(this.manager).load(this.textureRoot + path, function(texture) {
       texture.anisotropy = config.maxAnisotropy;
+
+      console.log('loaded!', texture.image.src);
 
       data[key] = texture;
       onComplete && onComplete(texture);

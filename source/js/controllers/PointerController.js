@@ -131,14 +131,14 @@ function PointerController(camera, element) {
     updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerDown();
 
-    e.preventDefault();
+    //e.preventDefault();
   });
   element.addEventListener('touchend', function(e) {
     var touch = e.changedTouches[0];
     updatePointerPosition(touch.clientX, touch.clientY);
     handlePointerUp();
 
-    e.preventDefault();
+    //e.preventDefault();
   });
   element.addEventListener('touchmove', function(e) {
     var touch = e.changedTouches[0];
