@@ -883,6 +883,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	}
 
 	function onContextMenu( event ) {
+    if ( scope.enabled === false ) return;
 
 		event.preventDefault();
 
