@@ -1,3 +1,6 @@
+// simple object rotation controller
+// has a bug where rotation is relative to the camera :(
+// based on http://benchung.com/smooth-mouse-rotation-three-js/
 function ObjectRotationController(object, element) {
   element = element || window;
 

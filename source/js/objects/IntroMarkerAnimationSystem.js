@@ -5,28 +5,37 @@ function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
 
   var i, j, offset;
 
-  // animation
+  // 1. Animation
+
   var aAnimation = bufferGeometry.createAttribute('aAnimation', 2);
   var delay, duration;
 
+  // each marker has an animation delay between minDelay and maxDelay
   var minDelay = 0, maxDelay = 2.0;
+  // each marker has an animation duration between minDuration and maxDuration
   var minDuration = 0.25, maxDuration = 1.0;
+  // amount of extra delay per marker vertex - this is what turns them into trails
   var stretch = 0.05;
 
+  // calculate total duration for animation
   this.animationDuration = maxDelay + maxDuration + stretch;
   this._animationProgress = 0;
 
+  // store values per marker
   for (i = 0, offset = 0; i < prefabCount; i++) {
+    // start with a few markers then ramp up
     delay = utils.ease(Circ.easeOut, i, minDelay, maxDelay, prefabCount);
     duration = THREE.Math.randFloat(minDuration, maxDuration);
 
     for (j = 0; j < prefabVertexCount; j++) {
-      aAnimation.array[offset++] = delay + (stretch * (j/prefabVertexCount));
+      aAnimation.array[offset++] = delay + (stretch * (j / prefabVertexCount));
       aAnimation.array[offset++] = duration;
     }
   }
 
-  // positions
+  // 2. positions
+
+  // define bezier path per marker
   var aStartPosition = bufferGeometry.createAttribute('aStartPosition', 3);
   var aControl0 = bufferGeometry.createAttribute('aControl0', 3);
   var aControl1 = bufferGeometry.createAttribute('aControl1', 3);
@@ -38,32 +47,33 @@ function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
   var endPosition;
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-
+    // end position on the globe
     endPosition = endPositions[i];
 
     var scale = THREE.Math.randFloat(6.0, 12.0);
-
+    // start position further away from the globe
     startPosition.copy(endPosition).multiplyScalar(scale);
-    //startPosition.y = THREE.Math.randFloatSpread(24.0);
-
+    // control position halfway between end and start
     controlPosition0.copy(endPosition).multiplyScalar(scale * 0.5);
-
+    // get angle and distance of control point
     var angleXZ = Math.atan2(controlPosition0.z, controlPosition0.x);
     var length = controlPosition0.length();
 
+    // rotate to create a curve
     angleXZ -= Math.PI * 0.25;
-
     var x = Math.cos(angleXZ);
     var z = Math.sin(angleXZ);
 
+    // randomize a little
     var scale0 = THREE.Math.randFloat(1.0, 2.0);
     controlPosition0.x = x * length * scale0;
     controlPosition0.z = z * length * scale0;
-
+    // randomize a little
     var scale1 = THREE.Math.randFloat(0.25, 0.50);
     controlPosition1.x = x * length * scale1;
     controlPosition1.z = z * length * scale1;
 
+    // store values
     for (j = 0; j < prefabVertexCount; j++) {
       aStartPosition.array[offset  ] = startPosition.x;
       aStartPosition.array[offset+1] = startPosition.y;
@@ -85,7 +95,9 @@ function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
     }
   }
 
-  // colors
+  // 3. colors
+
+  // each marker will change color during animation
   var aStartColor = bufferGeometry.createAttribute('aStartColor', 3);
   var color = bufferGeometry.createAttribute('color', 3); // end color
 
@@ -97,6 +109,7 @@ function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
   var hsl = endColor.set(0xd50c05).getHSL();
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
+    // randomize end color around same hue
     endColor.setHSL(hsl.h, THREE.Math.randFloat(0.5, 1.0), THREE.Math.randFloat(0.2, 0.5));
 
     for (j = 0; j < prefabVertexCount; j++) {
@@ -141,7 +154,6 @@ function IntroMarkerAnimationSystem(prefabGeometry, endPositions) {
       'float tDuration = aAnimation.y;',
       'float tTime = clamp(uTime - tDelay, 0.0, tDuration);',
       'float tProgress = ease(tTime, 0.0, 1.0, tDuration);'
-      //'float tProgress = tTime / tDuration;'
     ],
     shaderTransformPosition: [
       'transformed *= tProgress;',

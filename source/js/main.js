@@ -31,7 +31,7 @@ Globe.prototype = {
       });
     }
     catch(e) {
-      // fallback state
+      // no webgl fallback state
       document.querySelector('.globe').classList.add('error');
       document.querySelector('#preloader').style.display = 'none';
 
@@ -40,17 +40,16 @@ Globe.prototype = {
       return;
     }
 
-
     this.root.renderer.setClearColor(config.clearColor);
     this.root.camera.position.y = 160;
-
-    var light = new THREE.DirectionalLight(0xffffff, 2.0);
-    light.position.set(-1.0, 0.5, -0.1);
-    this.root.add(light, 'main_light');
 
     this.root.addResizeCallback(_.bind(function() {
       this.root.camera.position.z = this.computeCameraDistance();
     }, this));
+
+    var light = new THREE.DirectionalLight(0xffffff, 2.0);
+    light.position.set(-1.0, 0.5, -0.1);
+    this.root.add(light, 'main_light');
 
     // for three.js inspector
     window.scene = this.root.scene;
@@ -58,7 +57,7 @@ Globe.prototype = {
     // improve texture rendering near poles
     config.maxAnisotropy = this.root.renderer.getMaxAnisotropy();
 
-    // mobile / destkop settings
+    // mobile / desktop settings
     var device = new MobileDetect(window.navigator.userAgent);
     this.mobileMode = device.mobile();
 
@@ -72,7 +71,7 @@ Globe.prototype = {
 
     // load the things
     this.loader = new THREELoader(_.bind(this.loadedHandler, this), this.textureRoot);
-    //this.loader.loadTexture('earth_data', 'earth_data.jpg');
+    //this.loader.loadTexture('earth_data', 'earth_data.jpg'); // commented out because processing output is cached
     this.loader.loadTexture('earth_color', 'earth_color_2x.jpg');
     this.loader.loadTexture('earth_disp', 'earth_disp.jpg');
     this.loader.loadTexture('earth_bump', 'earth_bump.jpg');
@@ -118,8 +117,10 @@ Globe.prototype = {
 
     this.root.start();
   },
-
+  // only resize if orientation changes.
+  // set fixed height on container to prevent jumping on scroll
   initMobileResizeMode: function() {
+    // kind of hacky, find cleaner way to extend the root
     window.removeEventListener('resize', this.root.resize);
 
     var currentWidth = window.innerWidth;
@@ -152,16 +153,15 @@ Globe.prototype = {
   },
 
   initGUI:function() {
+    // setup gui
     var gui = this.gui = new dat.GUI();
 
     gui.domElement.style.visibility = 'hidden';
     gui.domElement.parentNode.style.zIndex = '9001';
     gui.width = 400;
 
-    var overlay = document.querySelector('.special-headline');
-
+    // setup debug camera
     var debugCamera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 1, 10000);
-
     debugCamera.position.z = 100;
 
     this.root.addResizeCallback(function() {
@@ -199,6 +199,9 @@ Globe.prototype = {
 
     gui.add(ctrl, 'toggleDebugCamera').name('toggle debug cam & controls');
 
+    // dom visibility toggle
+    var overlay = document.querySelector('.special-headline');
+
     window.addEventListener('keydown', function(e) {
       if (e.keyCode === 192) { // tilde
         if (gui.domElement.style.visibility === 'hidden') {
@@ -231,6 +234,7 @@ Globe.prototype = {
       copyPass
     ]);
 
+    // disable motion blur if there is not enough momentum
     this.root.addUpdateCallback(_.bind(function() {
       var rs = this.earthRotationController.rotationSpeed;
       var v = Math.abs(rs.y) * config.dirBlurFactor;
@@ -307,33 +311,36 @@ Globe.prototype = {
     //});
     //console.log(JSON.stringify(positions));
 
-    // output from the commented function above
+    // cached output from the commented function above
     var positions = JSON.parse(window.markerDataStr);
 
     this.markerPositions = [];
 
+    // convert from uv to lat long to vec3
     for (var j = 0; j < positions.length; j++) {
       var p = positions[j];
       var lat = THREE.Math.mapLinear(p.y, 0, 1, 90, -90);
-      var lon = THREE.Math.mapLinear(p.x, 0, 1, -180, 180);
+      var long = THREE.Math.mapLinear(p.x, 0, 1, -180, 180);
 
-      this.markerPositions[j] = utils.llToVec(lat, lon, config.earthRadius + p.elevation);
+      this.markerPositions[j] = utils.latLongToVec3(lat, long, config.earthRadius + p.elevation);
     }
   },
 
   initEarth:function() {
     var earth = new THREE.Mesh(
+      // high poly sphere geometry for displacement map
       new THREE.SphereGeometry(config.earthRadius, 200, 200),
       new THREE.MeshPhongMaterial({
+        // texutre
         map: this.loader.get('earth_color'),
-
+        // displacement map
         displacementMap: this.mobileMode ? undefined : this.loader.get('earth_disp'),
         displacementScale: 0.55,
         displacementBias: -0.10,
-
+        // bump map
         bumpMap: this.loader.get('earth_bump'),
         bumpScale: 0.1,
-
+        // specular settings
         specularMap: this.loader.get('earth_spec'),
         specular: 0x878787,
         shininess: 1.0
@@ -350,13 +357,14 @@ Globe.prototype = {
     );
 
     halo.scale.setScalar(1.125);
-
+    // pulsate halo slightly
     TweenMax.to(halo.scale, 6, {x:1.175, y:1.175, z: 1.175, ease:Power1.easeInOut, repeat:-1, yoyo:true});
-
+    // store rotation animation so it can be slowed down on pointer down
     halo.rotationAnimation = TweenMax.to(halo.rotation, 16, {y:Math.PI * 2, ease:Power0.easeIn, repeat:-1});
 
     this.root.add(earth, 'earth');
     this.root.addTo(halo, 'earth', 'halo');
+
     this.pointerController.register(earth);
 
     this.earthRotationController = new ObjectRotationController(earth, this.root.renderer.domElement);
@@ -388,23 +396,25 @@ Globe.prototype = {
   },
 
   initStars:function() {
-    //var prefabGeometry = new THREE.TetrahedronGeometry(0.5);
+    // use a single face as geometry
     var prefabGeometry = new THREE.Geometry();
     prefabGeometry.vertices.push(new THREE.Vector3(-1,  1, 0));
     prefabGeometry.vertices.push(new THREE.Vector3( 1, -1, 0));
     prefabGeometry.vertices.push(new THREE.Vector3(-1, -1, 0));
     prefabGeometry.faces.push( new THREE.Face3(0, 1, 2));
 
-    var mat = new THREE.Matrix4();
+    // scale down the geometry
     var scl = 0.5;
-    mat.multiply(new THREE.Matrix4().makeScale(scl, scl, scl));
-
+    var mat = new THREE.Matrix4().makeScale(scl, scl, scl);
     prefabGeometry.applyMatrix(mat);
+    // center the geometry for rotation
     prefabGeometry.center();
 
+    // init star animation system
     var starSystem = new StarAnimationSystem(prefabGeometry, 20000, 400, 1400);
     this.root.addTo(starSystem, 'earth', 'stars');
 
+    // rotate stars in opposite direction of earth
     var earthRotationController = this.earthRotationController;
 
     this.root.addUpdateCallback(function() {
@@ -420,8 +430,8 @@ Globe.prototype = {
   },
 
   initAsteroids:function() {
+    // init 'asteroids' animation system
     var prefabGeometry = new THREE.TetrahedronGeometry(2.0);
-
     var asteroidSystem = new AsteroidAnimationSystem(prefabGeometry, 200, 50, 400);
 
     this.root.add(asteroidSystem);
@@ -433,6 +443,7 @@ Globe.prototype = {
     // DAT.GUI
     if (!this.gui) return;
 
+    // shhhh!
     var extraSpecialGeometry = new THREE.TetrahedronGeometry(1.0);
     var extraSpecial = new AsteroidAnimationSystem(extraSpecialGeometry, 600, 0, 0);
     this.root.add(extraSpecial, 'extra_special');
@@ -449,10 +460,17 @@ Globe.prototype = {
   },
 
   initMarkers:function() {
+    // tiny spheres
     var prefabGeometry = new THREE.SphereGeometry(0.015, 8, 6);
+    // intro and idle marker animations are separate objects for sanity reasons
     var introAnimation = this.introMarkerAnimation = new IntroMarkerAnimationSystem(prefabGeometry, this.markerPositions);
     var idleAnimation = this.idleMakerAnimation = new IdleMarkerAnimationSystem(prefabGeometry, this.markerPositions, introAnimation.geometry.attributes.color.array);
 
+    this.root.addUpdateCallback(function() {
+      idleAnimation.update();
+    });
+
+    // pointer interaction things
     var earth = this.root.get('earth');
     var halo = this.root.get('halo');
     var earthMatrixInverse = new THREE.Matrix4();
@@ -460,15 +478,11 @@ Globe.prototype = {
     var searchLight = new THREE.PointLight(0xffffff, 0.0, 8.0, 2.0);
     this.root.addTo(searchLight, 'earth');
 
-    this.root.addUpdateCallback(function() {
-      idleAnimation.update();
-    });
-
     var interactionSettings = {
       overAttenuationDistance: 2.0,
       downAttenuationDistance: 4.0
     };
-
+    // touch interaction
     if (this.pointerController.isTouchDevice) {
       earth.addEventListener('pointer_down', function(e) {
         updatePointerPosition(e.intersection.point);
@@ -483,6 +497,7 @@ Globe.prototype = {
         TweenMax.to(idleAnimation, 1.0, {attenuationDistance: 0.0, ease:Power2.easeOut});
       });
     }
+    // mouse interaction
     else {
       earth.addEventListener('pointer_down', function(e) {
         TweenMax.to(halo.rotationAnimation, 1.0, {timeScale:0.25});
@@ -507,16 +522,18 @@ Globe.prototype = {
       });
     }
 
+    // touch / mouse shared behaviour
     earth.addEventListener('pointer_move', function(e) {
       updatePointerPosition(e.intersection.point);
     });
 
     function updatePointerPosition(point) {
+      // map pointer world coordinates back to local globe coordinates
       earthMatrixInverse.identity().getInverse(earth.matrixWorld);
       point.applyMatrix4(earthMatrixInverse);
-
+      // set position for active distance attenuation
       idleAnimation.setPointerPosition(point);
-
+      // set light position slightly above the globe
       searchLight.position.copy(point);
       searchLight.position.multiplyScalar(1.25);
     }
@@ -551,6 +568,7 @@ Globe.prototype = {
     var preloader = document.querySelector('#preloader');
     var eventDispatcher = this.eventDispatcher;
 
+    // intro animation timeline
     var tl = new TimelineMax({repeat:0});
 
     tl.call(function() {
@@ -605,6 +623,7 @@ Globe.prototype = {
     var root = this.root;
 
     tl.call(function() {
+      // swap intro and idle animation systems
       root.remove(introAnimation);
       root.remove(idleAnimation);
 
@@ -612,15 +631,18 @@ Globe.prototype = {
     });
     tl.fromTo(introAnimation, duration, {animationProgress:0}, {animationProgress:1, ease:Power0.easeIn});
     tl.call(function() {
+      // swap intro and idle animation systems
       root.remove(introAnimation);
       root.addTo(idleAnimation, 'earth');
 
+      // reset idle animation time for a smooth transition
       idleAnimation.resetIdleAnimation();
     });
 
     return tl;
   },
   createCameraAnimation:function(duration) {
+    // moves the camera from start position to end position based on angle and distance
     var proxy = {
       angle:Math.PI * -3.5,
       distance:400,
@@ -648,7 +670,7 @@ Globe.prototype = {
 
     return tl;
   },
-
+  // moves the camera further away on portrait orientations
   computeCameraDistance:function() {
     var ratio = window.innerWidth / window.innerHeight;
     var distance;
@@ -709,7 +731,7 @@ document.body.addEventListener('drop', function (e) {
   }
 });
 
-// colors getters for gui
+// colors getters for gui (move this!)
 Object.defineProperty(THREE.BAS.PhongAnimationMaterial.prototype, 'color', {
   get: function () {
     return this.uniforms.diffuse.value;

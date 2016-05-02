@@ -9,7 +9,6 @@ function AsteroidAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
   var position = new THREE.Vector3();
 
   for (i = 0, offset = 0; i < prefabCount; i++) {
-    //position.set(THREE.Math.randFloat(clear, spread), THREE.Math.randFloat(clear, spread), 0);
     position.setScalar(THREE.Math.randFloat(clear, spread));
 
     for (j = 0; j < prefabVertexCount; j++) {
@@ -21,7 +20,8 @@ function AsteroidAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
     }
   }
 
-  // axis angle
+  // spin = local rotation (pre translate)
+  // orbit = global rotation (post translate)
   var aSpin = bufferGeometry.createAttribute('aSpin', 4);
   var aOrbit = bufferGeometry.createAttribute('aOrbit', 4);
 
@@ -76,11 +76,8 @@ function AsteroidAnimationSystem(prefabGeometry, prefabCount, clear, spread) {
         'attribute vec4 aOrbit;'
       ],
       shaderTransformPosition: [
-        // spin
         'transformed = rotateVector(quatFromAxisAngle(aSpin.xyz, uTime * aSpin.w), transformed);',
-
         'transformed += aPosition;',
-
         'transformed = rotateVector(quatFromAxisAngle(aOrbit.xyz, uTime * aOrbit.w), transformed);'
       ]
     },

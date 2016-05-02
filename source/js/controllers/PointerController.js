@@ -1,3 +1,5 @@
+// pointer controller for mouse/touch event detection on THREE.js objects
+// only tested with one active object
 function PointerController(camera, element) {
   element = element || window;
 
@@ -54,7 +56,7 @@ function PointerController(camera, element) {
     }
   }
 
-  // maybe throttle this guy
+  // throttled for performance reasons
   var handlePointerMove = _.throttle(function() {
     var intersection = updateIntersections()[0];
 

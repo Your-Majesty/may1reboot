@@ -1,5 +1,5 @@
 var utils = {
-  llToVec:function(lat, lon, radius, v) {
+  latLongToVec3:function(lat, lon, radius, v) {
     var phi = (lat) * Math.PI / 180;
     var theta = (lon - 180) * Math.PI / 180;
 
