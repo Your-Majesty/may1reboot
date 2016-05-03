@@ -48,4 +48,4 @@ This project contains the WebGL globe that runs in the header of the [May 1st Re
   gulp live
   ```
 
-4. Browse to [http://localhost:3000](http://localhost:3000)
+4. Browse to [http://localhost:8080](http://localhost:8080)
