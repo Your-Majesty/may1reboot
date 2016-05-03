@@ -42,16 +42,10 @@ This project contains the WebGL globe that runs in the header of the [May 1 Rebo
   npm install
   ```
 
-3. Start development server
-
-  ```sh
-  gulp
-  ```
-
-4. Goto [http://localhost:3000](http://localhost:3000) and amaze :beer:
-
-Alternatively, run the following for a live reload server 
+3. Start (live reload) development server
 
   ```sh
   gulp live
   ```
+
+4. Browse to [http://localhost:3000](http://localhost:3000)
