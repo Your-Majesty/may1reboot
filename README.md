@@ -1,13 +1,10 @@
-# may1reboot
-
-# YM Game
+# May 1 Reboot WebGL Globe
 
 ## Dependencies
 
 - Node.js (0.12+)
 - [Gulp.js](http://gulpjs.com/)
 - [Bower](http://bower.io/)
-- [Surge](https://surge.sh/) (optional)
 
 ## Get up and running
 
@@ -53,6 +50,6 @@
 
 Alternatively, run the following for a live reload server 
 
-```sh
-gulp live
-```
+    ```sh
+    gulp live
+    ```
