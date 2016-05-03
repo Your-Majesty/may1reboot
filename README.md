@@ -50,6 +50,6 @@
 
 Alternatively, run the following for a live reload server 
 
-    ```sh
-    gulp live
-    ```
+  ```sh
+  gulp live
+  ```
